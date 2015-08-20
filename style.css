@@ -1,0 +1,119 @@
+body {
+    margin: 0;
+}
+
+canvas {
+    width: 100%;
+    height: 100%;
+    z-index: -1;
+}
+
+#controls {
+    width: 100%;
+    height: 100px;
+    background-color: #F5F5F5;
+}
+
+#play_pause_btn {
+    width: 50px;
+    top: 20px;
+    right: 40px;
+    position: absolute;
+}
+
+#mouse_action {
+    width: 120px;
+    top: 20px;
+    left: 20px;
+    background: #F5F5F5;
+    position: absolute;
+}
+
+.modal_form {
+    position: fixed;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    background: rgba(0, 0, 0, 0.8);
+    z-index: 10;
+}
+
+.modal_form > div {
+    width: 170px;
+    position: relative;
+    margin: 10% auto;
+    padding: 10px 10px 10px 10px;
+    border-radius: 5px;
+    background-color: rgba(0, 0, 0, 0.51);
+    color: white;
+    font-family: Geneva, Arial, Helvetica, sans-serif;
+}
+
+.modal_form > div > input {
+    margin-bottom: 10px;
+}
+
+.modal_form > div > button {
+    margin-right: 5px;
+}
+
+#message_box {
+    position: absolute;
+    bottom: 10px;
+    left: 10px;
+    height: 100px;
+    width: 400px;
+    border: ridge lightgray 3px;
+    background: white;
+    overflow: hidden;
+}
+
+#message_box_control_panel {
+    background: rgba(211, 211, 211, 0.5);
+    height: 15px;
+}
+
+#message_box_controls {
+    width: inherit;
+    height: inherit;
+    font-family: 'Courier New', Courier, 'Lucida Sans Typewriter', 'Lucida Typewriter', monospace;
+    font-size: 12px;
+    display: inline-flex;
+    align-items: center;
+}
+
+.message_box_control {
+    display: inline-flex;
+    align-items: center;
+    margin-right: 3px;
+}
+
+#clear_messages {
+    float: right;
+    height: 13px;
+    width: 13px;
+    margin-top: 1px;
+    cursor: pointer;
+}
+
+#messages {
+    overflow: auto;
+    height: 85px;
+}
+
+.message {
+    font-family: 'Courier New', Courier, 'Lucida Sans Typewriter', 'Lucida Typewriter', monospace;
+    font-size: 14px;
+    margin-left: 3px;
+    margin-top: 5px;
+}
+
+.message hr {
+    opacity: 0.7;
+    margin: 2px 0 2px 0;
+}
+
+.error {
+    color: red;
+}
