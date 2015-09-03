@@ -8,6 +8,7 @@
     <script type="text/javascript" src="libs/sylvester.js"></script>
     <script type="text/javascript" src="libs/TrackballControls.js"></script>
     <script type="text/javascript" src="libs/EventEmitter.min.js"></script>
+    <script type="text/javascript" src="libs/js.cookie.js"></script>
     <script type="text/javascript" src="libs/require.js"></script>
     <style id="logs_style">.log {
         display: block;
@@ -15,26 +16,33 @@
     <style id="errors_style">.error {
         display: block;
     }</style>
+    <script>
+        requirejs(['app']);
+    </script>
 </head>
 <body>
-<script>
-    requirejs(['app']);
-</script>
-<div id="mouse_action">
+
+<div id="mouse_action" class="select_control">
     Mouse Action: <br>
-    <input type="radio" name="mouseaction" value="info" checked="checked"> Info<br>
-    <input type="radio" name="mouseaction" value="edit"> Edit<br>
     <input type="radio" name="mouseaction" value="add_remove"> Add/Remove<br>
+    <input type="radio" name="mouseaction" value="info"> Info<br>
+</div>
+
+<div id="gear_type" class="select_control">
+    Type of gear: <br>
+    <input type="radio" name="geartype" value="spur"> Spur<br>
+    <input type="radio" name="geartype" value="bevel"> Bevel<br>
+    <input type="radio" name="geartype" value="helical"> Helical<br>
 </div>
 <button id="play_pause_btn">Play</button>
 <div id="message_box">
     <div id="message_box_control_panel">
         <div id="message_box_controls">
             <div class="message_box_control">
-                <input type="checkbox" id="show_logs" checked/> Show logs
+                <input type="checkbox" id="show_logs"/> Show logs
             </div>
             <div class="message_box_control">
-                <input type="checkbox" id="show_errors" checked/> Show errors
+                <input type="checkbox" id="show_errors"/> Show errors
             </div>
         </div>
         <img src="trashcan.png" id="clear_messages" title="Clear">

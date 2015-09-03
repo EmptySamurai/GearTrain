@@ -7,6 +7,7 @@ define(['models/BaseRotatingPart', 'geometry/Cylinder'],
 
     function Shaft(params, initiator) {
         BaseRotatingPart.call(this, params);
+        this.type='Shaft';
         this.length = params.length;
         this.radius = params.radius;
         this.gears = [];

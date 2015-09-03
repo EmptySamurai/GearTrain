@@ -13,18 +13,19 @@ define(function() {
                 return o._started;
             }
         });
-
     }
+
 
     GearTrain.prototype.iterate = function (f) {
         if (this.driverShaft)
             this.driverShaft.iterate(f);
     };
 
+
+
     GearTrain.prototype.removeGear = function (gear) {
         var i;
 
-        console.log(gear);
         if (gear.parentGear) {
             for (i = 0; i < gear.parentGear.gears.length; i++) {
                 if (gear.parentGear.gears[i] == gear) {
@@ -32,11 +33,6 @@ define(function() {
                 }
             }
         } else {
-            for (i = 0; i < gear.gears.length; i++) {
-                var g = gear.gears[i];
-                if (g)
-                    this.removeGear(g);
-            }
             var gearIndex = gear.shaft.gears.indexOf(gear);
             gear.shaft.gears.splice(gearIndex, 1);
         }

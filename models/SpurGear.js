@@ -6,15 +6,17 @@ define(['models/Gear', 'models/Shaft', 'geometry/Cylinder'], function (Gear, Sha
 
     function SpurGear(params, shaft, parentGear) {
         Gear.call(this, params, shaft, parentGear);
+        this.type = 'SpurGear';
         this.diametralPitch = params.diametralPitch;
         this.pressureAngle = params.pressureAngle;
         this.pitchCircleDiameter = this.teeth / this.diametralPitch;
         this.baseCircleRadius = this.pitchCircleDiameter * Math.cos(this.pressureAngle) / 2;
-        this.addendumCircleRadius = (this.teeth + 2) / this.diametralPitch / 2;
-        this.addendumAngle = Math.sqrt(this.addendumCircleRadius * this.addendumCircleRadius - this.baseCircleRadius * this.baseCircleRadius) / this.baseCircleRadius;
+        this.outsideCircleRadius = (this.teeth + 2) / this.diametralPitch / 2;
+        //according to http://www.arc.id.au/GearDrawing.html
+        this.addendumAngle = Math.sqrt(this.outsideCircleRadius * this.outsideCircleRadius - this.baseCircleRadius * this.baseCircleRadius) / this.baseCircleRadius;
         this.rootRadius = (this.teeth - 2) / this.diametralPitch / 2;
         if (this.rootRadius <= this.innerRadius) {
-            throw new Error("Inner radius larger than root diameter");
+            throw new Error("Inner radius larger than root radius");
         }
         var o = this;
         var intersections = [];
@@ -36,10 +38,10 @@ define(['models/Gear', 'models/Shaft', 'geometry/Cylinder'], function (Gear, Sha
 
     }
 
-    SpurGear.prototype = Gear.prototype;
+    SpurGear.prototype = Object.create(Gear.prototype);
 
     SpurGear.prototype.toCylinder = function () {
-        return new Cylinder(this.position.toArray(), this.axis.toArray(), this.addendumCircleRadius, this.width);
+        return new Cylinder(this.position.toArray(), this.axis.toArray(), this.outsideCircleRadius, this.width);
     };
 
     /**
@@ -49,7 +51,7 @@ define(['models/Gear', 'models/Shaft', 'geometry/Cylinder'], function (Gear, Sha
      * @param position Position of the gear (will be projected to the axis)
      */
     SpurGear.connectToShaft = function (shaft, params, position) {
-        position.projectOnVector(shaft.axis);
+        position.projectOnVector(shaft.axis).add(shaft.position);
         params.position = position;
         params.speed = shaft.speed;
         params.axis = shaft.axis;
@@ -65,14 +67,15 @@ define(['models/Gear', 'models/Shaft', 'geometry/Cylinder'], function (Gear, Sha
      *
      * @param params Object containing teeth, inner radius
      * @param direction The direction of connection *
-     * @param up the up of the 3d object
      * @return {SpurGear} connected gear
      */
     SpurGear.prototype.connectGear = function (params, direction) {
         params.teeth = Math.max(4, params.teeth);
-        params.speed = this.speed * this.teeth / params.teeth;
+        var ratio = this.teeth / params.teeth;
+        params.speed = this.speed * ratio;
         params.clockwise = !this.clockwise;
         var up = this.up;
+        direction = this.up.clone();
         direction.normalize();
         up.normalize();
         var jointAngle = Math.acos(direction.dot(up));
@@ -81,7 +84,6 @@ define(['models/Gear', 'models/Shaft', 'geometry/Cylinder'], function (Gear, Sha
             jointAngle = -jointAngle;
         }
         jointAngle = this.clockwise ? jointAngle : -jointAngle;
-        var ratio = this.teeth / params.teeth;
         /*
          Suppose that initially upper tooth is centered by Y axis
          1. Firstly let's imagine that gears' centers are on Y axis and driven gear is above driver gear
@@ -104,6 +106,7 @@ define(['models/Gear', 'models/Shaft', 'geometry/Cylinder'], function (Gear, Sha
         params.length = this.width * 3;
         var shaft = new Shaft(params, this);
         var gear = new SpurGear(params, shaft, this);
+        shaft.gears.push(gear);
         this.gears.push(gear);
         return gear;
     };

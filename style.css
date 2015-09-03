@@ -21,12 +21,20 @@ canvas {
     position: absolute;
 }
 
-#mouse_action {
+
+.select_control {
     width: 120px;
-    top: 20px;
     left: 20px;
     background: #F5F5F5;
     position: absolute;
+}
+
+#mouse_action {
+    top: 20px;
+}
+
+#gear_type {
+    top:100px;
 }
 
 .modal_form {

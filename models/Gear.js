@@ -27,6 +27,9 @@ define(['models/BaseRotatingPart', 'models/Shaft'], function (BaseRotatingPart, 
                     gear.iterate(f, this);
                 }
             }
+            if (this.parentGear) {
+                this.parentGear.iterate(f, this)
+            }
         } else {
             for (i = 0; i < this.gears.length; i++) {
                 gear = this.gears[i];
@@ -35,6 +38,9 @@ define(['models/BaseRotatingPart', 'models/Shaft'], function (BaseRotatingPart, 
                 }
             }
             this.shaft.iterate(f, this);
+            if (this.parentGear && this.parentGear!=initiator) {
+                this.parentGear.iterate(f, this);
+            }
         }
     };
 

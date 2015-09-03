@@ -6,7 +6,7 @@ define(function() {
     function BaseRotatingPart(params) {
         this.speed = params.speed; //speed in r.p.m
         this.clockwise = params.clockwise;
-        this.angle = params.angle;
+        this.angle = params.angle || 0;
         this.position = params.position;
         this.axis = params.axis.normalize();
         if (!params.up) {
@@ -19,7 +19,6 @@ define(function() {
     }
 
     BaseRotatingPart.prototype.__proto__ = EventEmitter.prototype;
-
 
     BaseRotatingPart.prototype.rotate = function (ms) {
         var radSpeed = (2 * Math.PI) / 60 * this.speed; //speed in radians

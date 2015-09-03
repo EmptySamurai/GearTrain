@@ -7,11 +7,12 @@ define(['models/Gear', 'geometry/Cylinder'], function (Gear, Cylinder) {
 
     function BevelGear(params, shaft, parent) {
         Gear.call(this, params, shaft, parent);
+        this.type = 'BevelGear';
         this.diametralPitch = params.diametralPitch;
         this.pressureAngle = params.pressureAngle;
         this.pitchCircleDiameter = this.teeth / this.diametralPitch;
         this.baseCircleRadius = this.pitchCircleDiameter * Math.cos(this.pressureAngle) / 2;
-        this.addendumCircleRadius = (this.teeth + 2) / this.diametralPitch / 2;
+        this.outsideCircleRadius = (this.teeth + 2) / this.diametralPitch / 2;
         this.rootRadius = (this.teeth - 2) / this.diametralPitch / 2;
         if (this.rootRadius <= this.innerRadius) {
             throw new Error("Inner radius larger than root diameter");
@@ -36,38 +37,38 @@ define(['models/Gear', 'geometry/Cylinder'], function (Gear, Cylinder) {
 
     }
 
+
     /**
-     * Creates pair of bevel gears with 90deg shaft angle and connects to shaft
+     * Connects new bevel gear to shaft
      * @param shaft shaft to connect
-     * @param driverParams Parameters for the driver gear: shaft, diametralPitch, pressureAngle, number of teeth
-     * @param drivenParams Parameters for the driven gear: number of teeth
-     * @param driverPosition position of driver gear center
-     * @param drivenDirection direction of driven gear connection
+     * @param params Parameters for the driver gear: shaft, diametralPitch, pressureAngle, number of teeth, child's number of teeth
+     * @param position position of driver center
      */
-    BevelGear.createGearsPair = function (shaft, driverParams, drivenParams, driverPosition, drivenDirection) {
+    BevelGear.connectToShaft = function (shaft, params, position) {
         var firstEnd = new THREE.Vector3().addVectors(shaft.position, shaft.axis.clone().setLength(shaft.length / 2));
         var secondEnd = new THREE.Vector3().addVectors(shaft.position, shaft.axis.clone().setLength(shaft.length / 2).negate());
-        var position;
-        if (firstEnd.distanceTo(driverPosition) < secondEnd.distanceTo(driverPosition)) {
-            driverParams.position = firstEnd;
+        if (firstEnd.distanceTo(position) < secondEnd.distanceTo(position)) {
+            position.position = firstEnd;
         } else {
-            driverParams.position = secondEnd;
+            position.position = secondEnd;
         }
-        driverParams.shaft = shaft;
-        driverParams.speed = shaft.speed;
-        driverParams.axis = shaft.axis;
-        driverParams.clockwise = shaft.clockwise;
-        driverParams.angle = 0;
-        driverParams.innerRadius = shaft.radius;
+        params.shaft = shaft;
+        params.speed = shaft.speed;
+        params.axis = shaft.axis;
+        params.clockwise = shaft.clockwise;
+        params.angle = 0;
+        params.innerRadius = shaft.radius;
 
         var shaftAngle = Math.PI / 2;
-        driverParams.pitchConeAngle = Math.atan(driverParams.teeth / drivenParams.teeth);
-        drivenParams.pitchConeAngle = shaftAngle - driverParams.pitchConeAngle;
-        drivenParams.addendum = 0.54 / driverParams.diametralPitch + 0.46 / (drivenParams.diametralPitch * ((drivenParams.teeth * Math.cos(driverParams.pitchConeAngle)) / (driverParams.teeth * Math.cos(drivenParams.pitchConeAngle))));
-        driverParams.addendum = 2 / driverParams.diametralPitch - drivenParams.addendum;
-        var driverGear = new BevelGear(driverParams, drivenParams.shaft, null);
+        params.pitchConeAngle = Math.atan(params.teeth / params.childTeeth);
+        var childPitchConeAngle = shaftAngle - params.pitchConeAngle;
+        var childAddendum = 0.54 / params.diametralPitch + 0.46 / (params.diametralPitch * ((params.childTeeth * Math.cos(params.pitchConeAngle)) / (params.teeth * Math.cos(childPitchConeAngle))));
+        params.addendum = 2 / params.diametralPitch - childAddendum;
+        params.coneDistance = this.teeth / this.diametralPitch / (2 * Math.sin(childPitchConeAngle));
+        var driverGear = new BevelGear(params, shaft, null);
 
     };
+
 
     BevelGear.prototype = Gear.prototype;
 });
