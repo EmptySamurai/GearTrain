@@ -2,8 +2,8 @@
  * Created by emptysamurai on 25-Aug-15.
  */
 
-define(['models/GearTrain', 'models/Shaft', 'models/SpurGear', 'models/BevelGear', 'models/HelicalGear', 'ui/ModalForm', 'ui/MessageBox', 'views/ShaftMesh', 'views/SpurGearMesh', 'views/HelicalGearMesh', 'controllers/MouseController'],
-    function (GearTrain, Shaft, SpurGear, BevelGear, HelicalGear, ModalForm, MessageBox, ShaftMesh, SpurGearMesh, HelicalGearMesh, MouseController) {
+define(['models/GearTrain', 'models/Shaft', 'models/SpurGear', 'models/BevelGear', 'models/HelicalGear', 'ui/ModalForm', 'ui/MessageBox', 'views/ShaftMesh', 'views/SpurGearMesh', 'views/BevelGearMesh', 'views/HelicalGearMesh',  'controllers/MouseController'],
+    function (GearTrain, Shaft, SpurGear, BevelGear, HelicalGear, ModalForm, MessageBox, ShaftMesh, SpurGearMesh, BevelGearMesh, HelicalGearMesh, MouseController) {
 
         function addAxes(scene) {
             var axes = new THREE.AxisHelper(200);
@@ -53,6 +53,23 @@ define(['models/GearTrain', 'models/Shaft', 'models/SpurGear', 'models/BevelGear
 
         GearTrainController.prototype.pressureAngle = Math.PI / 9;
 
+        GearTrainController.prototype.addGearToShaft = function(shaft, position, form, connectionFunction) {
+            var o = this;
+            form.show(function (e) {
+                if (e.ok) {
+                    e.values.pressureAngle = o.pressureAngle;
+                    try {
+                        var gear = connectionFunction(shaft, e.values, position);
+                        o.reload();
+                    } catch (err) {
+                        alert(err);
+                        o.messageBox.err(err);
+                        e.prevent = true;
+                        throw err;
+                    }
+                }
+            });
+        };
 
         GearTrainController.prototype.addSpurGearToShaft = function (shaft, position) {
             var form = new ModalForm({
@@ -72,20 +89,35 @@ define(['models/GearTrain', 'models/Shaft', 'models/SpurGear', 'models/BevelGear
                     label: "Diametral pitch"
                 }
             });
-            var o = this;
-            form.show(function (e) {
-                if (e.ok) {
-                    e.values.pressureAngle = o.pressureAngle;
-                    try {
-                        var gear = SpurGear.connectToShaft(shaft, e.values, position);
-                        o.reload();
-                    } catch (err) {
-                        alert(err);
-                        o.messageBox.err(err);
-                        e.prevent = true;
-                    }
+            this.addGearToShaft(shaft, position, form, SpurGear.connectToShaft);
+        };
+
+        GearTrainController.prototype.addBevelGearToShaft = function (shaft, position) {
+            var form = new ModalForm({
+                teeth: {
+                    type: Number,
+                    validator: function (t) {
+                        return t >= 4;
+                    },
+                    label: "Number of teeth"
+                },
+                width: {
+                    type: Number,
+                    label: "Width"
+                },
+                diametralPitch: {
+                    type: Number,
+                    label: "Diametral pitch"
+                },
+                childTeeth: {
+                    type: Number,
+                    validator: function (t) {
+                        return t >= 4;
+                    },
+                    label: "Number of child's teeth"
                 }
             });
+            this.addGearToShaft(shaft, position, form, BevelGear.connectToShaft);
         };
 
         GearTrainController.prototype.addHelicalGearToShaft = function (shaft, position) {
@@ -110,21 +142,7 @@ define(['models/GearTrain', 'models/Shaft', 'models/SpurGear', 'models/BevelGear
                  label: "Helix angle(deg)"
                  }*/
             });
-            var o = this;
-            form.show(function (e) {
-                if (e.ok) {
-                    e.values.pressureAngle = o.pressureAngle;
-                    //e.values.helixAngle = e.values.helixAngle*Math.PI/180;
-                    try {
-                        var gear = HelicalGear.connectToShaft(shaft, e.values, position);
-                        o.reload();
-                    } catch (err) {
-                        alert(err);
-                        o.messageBox.err(err);
-                        e.prevent = true;
-                    }
-                }
-            });
+            this.addGearToShaft(shaft, position, form, HelicalGear.connectToShaft);
         };
 
         GearTrainController.prototype.shaftDoubleClickHandler = function (shaftMesh, position) {
@@ -136,6 +154,9 @@ define(['models/GearTrain', 'models/Shaft', 'models/SpurGear', 'models/BevelGear
                     this.addSpurGearToShaft(shaft, position);
                     break;
                 }
+                case 'bevel':
+                    this.addBevelGearToShaft(shaft, position);
+                    break;
                 case 'helical':
                 {
                     this.addHelicalGearToShaft(shaft, position);
@@ -144,7 +165,7 @@ define(['models/GearTrain', 'models/Shaft', 'models/SpurGear', 'models/BevelGear
             }
         };
 
-        GearTrainController.prototype.spurGearDoubleClickHandler = function (spurMesh, position) {
+        GearTrainController.prototype.spurOrHelicalGearDoubleClickHandler = function (spurMesh, position) {
             var gear = spurMesh.model;
             var direction = position.projectOnPlane(gear.axis).sub(gear.position.clone().projectOnPlane(gear.axis));
 
@@ -174,6 +195,31 @@ define(['models/GearTrain', 'models/Shaft', 'models/SpurGear', 'models/BevelGear
             });
         };
 
+        GearTrainController.prototype.bevelGearDoubleClickHandler = function (bevelMesh, position) {
+            var gear = bevelMesh.model;
+            var direction = position.projectOnPlane(gear.axis).sub(gear.position.clone().projectOnPlane(gear.axis));
+
+            var form = new ModalForm({
+                innerRadius: {
+                    type: Number
+                }
+            });
+            var o = this;
+            form.show(function (e) {
+                if (e.ok) {
+                    try {
+                        gear.connectGear(e.values, direction);
+                        o.reload();
+                    } catch (err) {
+                        alert(err);
+                        o.messageBox.err(err);
+                        e.prevent = true;
+                        throw err;
+                    }
+                }
+            });
+        };
+
         GearTrainController.prototype.shaftRightClickHandler = function (shaftMesh, position) {
             try {
                 this.gearTrain.removeShaft(shaftMesh.model);
@@ -195,6 +241,7 @@ define(['models/GearTrain', 'models/Shaft', 'models/SpurGear', 'models/BevelGear
             var o = this;
 
             gearTrain.iterate(function (e) {
+
                 if (e instanceof Shaft) {
                     var shaftMesh = new ShaftMesh(e);
                     shaftMesh.onDoubleClick(function (mesh, pos) {
@@ -207,16 +254,25 @@ define(['models/GearTrain', 'models/Shaft', 'models/SpurGear', 'models/BevelGear
                 } else if (e instanceof SpurGear) {
                     var spurGearMesh = new SpurGearMesh(e);
                     spurGearMesh.onDoubleClick(function (mesh, pos) {
-                        o.spurGearDoubleClickHandler(mesh, pos);
+                        o.spurOrHelicalGearDoubleClickHandler(mesh, pos);
                     });
                     spurGearMesh.onRightButtonClick(function (mesh, pos) {
                         o.gearRightClickHandler(mesh, pos);
                     });
                     o.scene.add(spurGearMesh);
+                } else if (e instanceof BevelGear) {
+                    var bevelGearMesh = new BevelGearMesh(e);
+                    bevelGearMesh.onDoubleClick(function (mesh, pos) {
+                        o.bevelGearDoubleClickHandler(mesh, pos);
+                    });
+                    bevelGearMesh.onRightButtonClick(function (mesh, pos) {
+                        o.gearRightClickHandler(mesh, pos);
+                    });
+                    o.scene.add(bevelGearMesh);
                 } else if (e instanceof HelicalGear) {
                     var helicalGearMesh = new HelicalGearMesh(e);
                     helicalGearMesh.onDoubleClick(function (mesh, pos) {
-                        o.spurGearDoubleClickHandler(mesh, pos); //TODO: make another or rename method
+                        o.spurOrHelicalGearDoubleClickHandler(mesh, pos); //TODO: make another or rename method
                     });
                     helicalGearMesh.onRightButtonClick(function (mesh, pos) {
                         o.gearRightClickHandler(mesh, pos);
@@ -236,16 +292,16 @@ define(['models/GearTrain', 'models/Shaft', 'models/SpurGear', 'models/BevelGear
             gearTrain.prototype = GearTrain.prototype;
             gearTrain.iterate(function (o) {
                 switch (o.type) {
-                    case 'Shaft':
+                    case Shaft.type:
                         o.prototype = Shaft.prototype;
                         break;
-                    case 'SpurGear':
+                    case SpurGear.type:
                         o.prototype = SpurGear.prototype;
                         break;
-                    case 'BevelGear':
+                    case BevelGear.type:
                         o.prototype = BevelGear.prototype;
                         break;
-                    case 'HelicalGear':
+                    case HelicalGear.type:
                         o.prototype = HelicalGear.prototype;
                         break;
                     default:
@@ -255,7 +311,7 @@ define(['models/GearTrain', 'models/Shaft', 'models/SpurGear', 'models/BevelGear
             return gearTrain;
         };
 
-        GearTrainController.prototype.saveToFile = function() {
+        GearTrainController.prototype.saveToFile = function () {
             var json = JSON.stringify(this.gearTrain);
             var blob = new Blob(json);
         }

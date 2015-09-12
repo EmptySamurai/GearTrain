@@ -44,5 +44,23 @@ define(['models/BaseRotatingPart', 'models/Shaft'], function (BaseRotatingPart, 
         }
     };
 
+    Gear.prototype.getIntersections =function() {
+        var intersections = [];
+        var o = this;
+        var checkIntersection = function (e) {
+            if (e != o.shaft && e != o.parentGear) {
+                if (o.intersects(e)) {
+                    intersections.push(e);
+                }
+            }
+        };
+        if (this.parentGear) {
+            this.parentGear.iterate(checkIntersection);
+        } else if (this.shaft) {
+            this.shaft.iterate(checkIntersection);
+        }
+        return intersections;
+    };
+
     return Gear;
 });

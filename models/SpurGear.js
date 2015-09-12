@@ -6,39 +6,37 @@ define(['models/Gear', 'models/Shaft', 'geometry/Cylinder'], function (Gear, Sha
 
     function SpurGear(params, shaft, parentGear) {
         Gear.call(this, params, shaft, parentGear);
-        this.type = 'SpurGear';
+        this.type = SpurGear.type;
         this.diametralPitch = params.diametralPitch;
         this.pressureAngle = params.pressureAngle;
-        this.pitchCircleDiameter = this.teeth / this.diametralPitch;
-        this.baseCircleRadius = this.pitchCircleDiameter * Math.cos(this.pressureAngle) / 2;
-        this.outsideCircleRadius = (this.teeth + 2) / this.diametralPitch / 2;
-        //according to http://www.arc.id.au/GearDrawing.html
-        this.addendumAngle = Math.sqrt(this.outsideCircleRadius * this.outsideCircleRadius - this.baseCircleRadius * this.baseCircleRadius) / this.baseCircleRadius;
-        this.rootRadius = (this.teeth - 2) / this.diametralPitch / 2;
-        if (this.rootRadius <= this.innerRadius) {
+        if (this.rootRadius() <= this.innerRadius) {
             throw new Error("Inner radius larger than root radius");
         }
-        var o = this;
-        var intersections = [];
-        var checkIntersection = function (e) {
-            if (e != shaft && e != parentGear) {
-                if (o.intersects(e)) {
-                    intersections.push(e);
-                }
-            }
-        };
-        if (parentGear) {
-            parentGear.iterate(checkIntersection);
-        } else if (shaft) {
-            shaft.iterate(checkIntersection);
-        }
-        if (intersections.length > 0) {
+
+        if (this.getIntersections().length > 0) {
             throw new Error("Spur gear is intersecting");
         }
-
     }
 
     SpurGear.prototype = Object.create(Gear.prototype);
+
+    SpurGear.type = 'SpurGear';
+
+    SpurGear.prototype.pitchCircleDiameter = function () {
+        return this.teeth / this.diametralPitch;
+    };
+
+    SpurGear.prototype.baseCircleRadius = function () {
+        return this.pitchCircleDiameter() * Math.cos(this.pressureAngle) / 2;
+    };
+
+    SpurGear.prototype.outsideCircleRadius = function () {
+        return (this.teeth + 2) / this.diametralPitch / 2;
+    };
+
+    SpurGear.prototype.rootRadius = function () {
+        return (this.teeth - 2) / this.diametralPitch / 2;
+    };
 
     SpurGear.prototype.toCylinder = function () {
         return new Cylinder(this.position.toArray(), this.axis.toArray(), this.outsideCircleRadius, this.width);
@@ -51,7 +49,12 @@ define(['models/Gear', 'models/Shaft', 'geometry/Cylinder'], function (Gear, Sha
      * @param position Position of the gear (will be projected to the axis)
      */
     SpurGear.connectToShaft = function (shaft, params, position) {
-        position.projectOnVector(shaft.axis).add(shaft.position);
+        if (shaft.length<params.width) {
+            throw new Error('Width of spur gear is larger than shaft length');
+        }
+        var halfAvailableShaft = shaft.axis.clone().setLength(shaft.length/2-params.width/2);
+        var axisLine = new THREE.Line3(shaft.position.clone().add(halfAvailableShaft), shaft.position.clone().sub(halfAvailableShaft));
+        position = axisLine.closestPointToPoint(position, true);
         params.position = position;
         params.speed = shaft.speed;
         params.axis = shaft.axis;
@@ -74,8 +77,8 @@ define(['models/Gear', 'models/Shaft', 'geometry/Cylinder'], function (Gear, Sha
         var ratio = this.teeth / params.teeth;
         params.speed = this.speed * ratio;
         params.clockwise = !this.clockwise;
+        params.up = direction.clone().normalize();
         var up = this.up;
-        direction = this.up.clone();
         direction.normalize();
         up.normalize();
         var jointAngle = Math.acos(direction.dot(up));
@@ -92,10 +95,9 @@ define(['models/Gear', 'models/Shaft', 'geometry/Cylinder'], function (Gear, Sha
          If driver was rotated by some angle than driven should be rotated by the same angle multiplied by ratio
          2. Now there is a joint angle - an angle between Y axis and line connecting gears' centers. If driver rotates clockwise it's positive otherwise not.
          We will try to 'imitate' the situation that was in section 1.
-         Firstly we 'rotate' driver gear by -joint angle
-         Then we 'rotate' the driven gear by -joint angle
+         So we have to 'rotate' driver gear by -joint angle
          */
-        params.angle = Math.PI + 2 * Math.PI / params.teeth / 2 + (this.angle - jointAngle) * ratio - jointAngle;
+        params.angle = Math.PI + 2 * Math.PI / params.teeth / 2 + (this.angle - jointAngle) * ratio;
         params.diametralPitch = this.diametralPitch;
         params.pressureAngle = this.pressureAngle;
         var distance = ((this.teeth + params.teeth) / this.diametralPitch) / 2;

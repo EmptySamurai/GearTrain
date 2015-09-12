@@ -8,9 +8,9 @@ define(['views/BasicRotatingPartMesh'], function (BasicRotatingPartMesh) {
         THREE.Geometry.call(this);
 
         var width = spurGear.width;
-        var baseRadius = spurGear.baseCircleRadius;
-        var addendumAngle = spurGear.addendumAngle;
-        var rootRadius = spurGear.rootRadius;
+        var baseRadius = spurGear.baseCircleRadius();
+        var outsideRadius = spurGear.outsideCircleRadius();
+        var rootRadius = spurGear.rootRadius();
         var pressureAngle = spurGear.pressureAngle;
         var teeth = spurGear.teeth;
 
@@ -20,7 +20,9 @@ define(['views/BasicRotatingPartMesh'], function (BasicRotatingPartMesh) {
 
         var segments = 12;
 
-        var step = addendumAngle / segments;
+        //according to http://www.arc.id.au/GearDrawing.html
+        var maxAngle = Math.sqrt(outsideRadius * outsideRadius - baseRadius * baseRadius) / baseRadius;
+        var step = maxAngle / segments;
 
 
         //Create first part of tooth profile
@@ -227,15 +229,18 @@ define(['views/BasicRotatingPartMesh'], function (BasicRotatingPartMesh) {
         var mIdentity = new THREE.Matrix4();
 
         //create wheel
+        var innerRadius = spurGear.innerRadius;
+        var width = spurGear.width;
+        var rootRadius = spurGear.rootRadius();
         var wheelPoints = [
-            new THREE.Vector3(spurGear.innerRadius, 0, 0),
-            new THREE.Vector3(spurGear.rootRadius, 0, 0),
-            new THREE.Vector3(spurGear.rootRadius, 0, spurGear.width),
-            new THREE.Vector3(spurGear.innerRadius, 0, spurGear.width),
-            new THREE.Vector3(spurGear.innerRadius, 0, 0)
+            new THREE.Vector3(innerRadius, 0, 0),
+            new THREE.Vector3(rootRadius, 0, 0),
+            new THREE.Vector3(rootRadius, 0, width),
+            new THREE.Vector3(innerRadius, 0, width),
+            new THREE.Vector3(innerRadius, 0, 0)
         ];
 
-        var gear = new THREE.LatheGeometry(wheelPoints, Math.ceil(10 * spurGear.rootRadius));
+        var gear = new THREE.LatheGeometry(wheelPoints, Math.ceil(10 * rootRadius));
         this.merge(gear, mIdentity);
 
 
@@ -249,7 +254,7 @@ define(['views/BasicRotatingPartMesh'], function (BasicRotatingPartMesh) {
 
         this.mergeVertices();
 
-        this.applyMatrix(new THREE.Matrix4().makeTranslation(0, 0, -spurGear.width / 2));
+        this.applyMatrix(new THREE.Matrix4().makeTranslation(0, 0, -width / 2));
 
     };
 

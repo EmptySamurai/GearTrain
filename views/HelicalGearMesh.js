@@ -5,12 +5,11 @@ define(['views/BasicRotatingPartMesh', 'models/HelicalGear'], function (BasicRot
 
         var width = helicalGear.width;
         var teeth = helicalGear.teeth;
-        var pressureAngle = helicalGear.radialPressureAngle;
-        var pitchCircleRadius = helicalGear.pitchCircleDiameter / 2;
-        var baseRadius = helicalGear.baseCircleRadius;
-        var outsideRadius = helicalGear.outsideCircleRadius;
-        var addendumAngle = helicalGear.addendumAngle;
-        var rootRadius = helicalGear.rootRadius;
+        var pressureAngle = helicalGear.radialPressureAngle();
+        var pitchCircleRadius = helicalGear.pitchCircleDiameter() / 2;
+        var baseRadius = helicalGear.baseCircleRadius();
+        var outsideRadius = helicalGear.outsideCircleRadius();
+        var rootRadius = helicalGear.rootRadius();
 
         var zAxis = new THREE.Vector3(0, 0, 1);
         var vertices = this.vertices;
@@ -20,7 +19,8 @@ define(['views/BasicRotatingPartMesh', 'models/HelicalGear'], function (BasicRot
 
         var segments = 12;
 
-        var step = addendumAngle / segments;
+        var maxAngle = Math.sqrt(outsideRadius * outsideRadius - baseRadius * baseRadius) / baseRadius;
+        var step = maxAngle / segments;
 
         //create involute curve
         var involuteVertices = [];
@@ -129,15 +129,18 @@ define(['views/BasicRotatingPartMesh', 'models/HelicalGear'], function (BasicRot
         var mIdentity = new THREE.Matrix4();
 
         //create wheel
+        var innerRadius = helicalGear.innerRadius;
+        var rootRadius = helicalGear.rootRadius();
+        var width = helicalGear.width;
         var wheelPoints = [
-            new THREE.Vector3(helicalGear.innerRadius, 0, 0),
-            new THREE.Vector3(helicalGear.rootRadius, 0, 0),
-            new THREE.Vector3(helicalGear.rootRadius, 0, helicalGear.width),
-            new THREE.Vector3(helicalGear.innerRadius, 0, helicalGear.width),
-            new THREE.Vector3(helicalGear.innerRadius, 0, 0)
+            new THREE.Vector3(innerRadius, 0, 0),
+            new THREE.Vector3(rootRadius, 0, 0),
+            new THREE.Vector3(rootRadius, 0, width),
+            new THREE.Vector3(innerRadius, 0, width),
+            new THREE.Vector3(innerRadius, 0, 0)
         ];
 
-        var gear = new THREE.LatheGeometry(wheelPoints, Math.ceil(10 * helicalGear.rootRadius));
+        var gear = new THREE.LatheGeometry(wheelPoints, Math.ceil(10 * rootRadius));
         this.merge(gear, mIdentity);
 
 
@@ -151,7 +154,7 @@ define(['views/BasicRotatingPartMesh', 'models/HelicalGear'], function (BasicRot
 
         this.mergeVertices();
 
-        this.applyMatrix(new THREE.Matrix4().makeTranslation(0, 0, -helicalGear.width / 2));
+        this.applyMatrix(new THREE.Matrix4().makeTranslation(0, 0, -width / 2));
 
     };
 

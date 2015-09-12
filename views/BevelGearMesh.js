@@ -2,36 +2,30 @@
  * Created by emptysamurai on 25-Aug-15.
  */
 
-define(['views/BasicRotatingPartMesh','views/InvoluteToothGeometry'], function(BasicRotatingPartMesh, InvoluteToothGeometry) {
+define(['views/BasicRotatingPartMesh'], function (BasicRotatingPartMesh) {
 
     var BevelInvoluteToothGeometry = function (bevelGear) {
         THREE.Geometry.call(this);
 
-        var teeth = bevelGear.teeth;
+        var baseRadius = bevelGear.baseCircleRadius();
+        var rootRadius = bevelGear.rootRadius();
+        var outsideRadius = bevelGear.outsideCircleRadius();
         var pressureAngle = bevelGear.pressureAngle;
-        var width = bevelGear.width/Math.cos(Math.PI/2-bevelGear.pitchConeAngle);
+        var teeth = bevelGear.teeth;
+        var faceWidth = bevelGear.faceWidth();
+        var pitchConeAngle = bevelGear.pitchConeAngle();
 
-        var pitchRadiusBack = bevelGear.coneDistance*Math.tan(bevelGear.pitchConeAngle); //back cone dist
-        var baseRadiusBack = pitchRadiusBack * Math.cos(pressureAngle);
-        var diametralPitchBack = teeth/(2*pitchRadiusBack);
-        var addendumCircleRadiusBack = (teeth + 2) / diametralPitchBack/2;
-        var addendumAngleBack = Math.sqrt(addendumCircleRadiusBack * addendumCircleRadiusBack - baseRadiusBack * baseRadiusBack) / baseRadiusBack;
-        var rootRadiusBack = (teeth-2)/diametralPitchBack/2;
-
-        var pitchRadiusFront = pitchRadiusBack*(bevelGear.coneDistance-width)/bevelGear.c
-        var baseRadiusBack = pitchRadius * Math.cos(pressureAngle);
-        var diametralPitchBack = teeth/(2*pitchRadius);
-        var addendumCircleRadiusBack = (teeth + 2) / diametralPitch/2;
-        var addendumAngleBack = Math.sqrt(addendumCircleRadius * addendumCircleRadius - baseRadius * baseRadius) / baseRadius;
-        var rootRadiusBack = (teeth-2)/diametralPitch/2;
+        var coneDistance = bevelGear.coneDistance();
+        var backConeDistance = bevelGear.backConeDistance();
 
         var vertices = this.vertices;
 
-        var halfToothAngle = Math.PI / (2 * teeth) + Math.tan(pressureAngle) - pressureAngle;
+        var halfToothAngleAtBaseCircle = Math.PI / (2 * teeth) + Math.tan(pressureAngle) - pressureAngle;
 
         var segments = 12;
 
-        var step = addendumAngle / segments;
+        var maxAngle = Math.sqrt(outsideRadius * outsideRadius - baseRadius * baseRadius) / baseRadius;
+        var step = maxAngle / segments;
 
 
         //Create first part of tooth profile
@@ -40,14 +34,28 @@ define(['views/BasicRotatingPartMesh','views/InvoluteToothGeometry'], function(B
 
         var i, angle, x, y, v, v2, l;
 
+        var xDif = backConeDistance - bevelGear.pitchCircleDiameter() / 2;
+        var zAxis = new THREE.Vector3(0, 0, 1);
+        var yAxis = new THREE.Vector3(0, 1, 0);
+        var pitchApex = new THREE.Vector3(0, 0, Math.sqrt(backConeDistance * backConeDistance + coneDistance * coneDistance));
 
+        var bottomCreated=false;
         for (i = 0; i < segments; i++) {
             angle = step * i;
             x = baseRadius * Math.cos(angle) + baseRadius * angle * Math.sin(angle);
             y = baseRadius * Math.sin(angle) - baseRadius * angle * Math.cos(angle);
-            v = new THREE.Vector3(x, y, 0);
-            v2 = v.clone();
-            v2.z = width;
+            if (i==0 && !bottomCreated) {
+                v = new THREE.Vector3(x, y, 0);
+                v.sub(new THREE.Vector3(x, y, 0).setLength(baseRadius - rootRadius));
+                bottomCreated = true;
+                i--;
+            } else {
+                v = new THREE.Vector3(x, y, 0);
+            }
+            v.applyAxisAngle(zAxis, -halfToothAngleAtBaseCircle);
+            v.x+=xDif;
+            v.applyAxisAngle(yAxis, - pitchConeAngle);
+            v2 = v.clone().add(new THREE.Vector3().subVectors(pitchApex, v).setLength(faceWidth));
             vertices.push(v);
             vertices.push(v2);
             l = vertices.length;
@@ -59,14 +67,25 @@ define(['views/BasicRotatingPartMesh','views/InvoluteToothGeometry'], function(B
 
 
         //Create second part of tooth profile
-        this.applyMatrix(new THREE.Matrix4().makeRotationZ(-2 * halfToothAngle));
+        var lastVertexCreated = false;
         for (i = segments - 1; i >= 0; i--) {
             angle = step * i;
             x = baseRadius * Math.cos(angle) + baseRadius * angle * Math.sin(angle);
             y = -(baseRadius * Math.sin(angle) - baseRadius * angle * Math.cos(angle));
-            v = new THREE.Vector3(x, y, 0);
-            v2 = v.clone();
-            v2.z = width;
+            if (i==0 && lastVertexCreated) {
+                v = new THREE.Vector3(x, y, 0);
+                v.sub(new THREE.Vector3(x, y, 0).setLength(baseRadius - rootRadius));
+            } else {
+                v = new THREE.Vector3(x, y, 0);
+                if (i==0) {
+                    lastVertexCreated=true;
+                    i++;
+                }
+            }
+            v.applyAxisAngle(zAxis, halfToothAngleAtBaseCircle);
+            v.x+=xDif;
+            v.applyAxisAngle(yAxis, - pitchConeAngle);
+            v2 = v.clone().add(new THREE.Vector3().subVectors(pitchApex, v).setLength(faceWidth));
             vertices.push(v);
             vertices.push(v2);
             l = vertices.length;
@@ -83,36 +102,12 @@ define(['views/BasicRotatingPartMesh','views/InvoluteToothGeometry'], function(B
             this.faces.push(new THREE.Face3(i - 2 + 1, i + 1, lastInvoluteVertex + 1));
         }
 
+
+        //Move so that beginning of the tooth will be at z=0
+        this.applyMatrix(new THREE.Matrix4().makeTranslation(0,0,-(backConeDistance - bevelGear.dedendum()) * Math.sin(pitchConeAngle)));
+
         //Rotate so that tooth will be centered by Y axis
-        var rotateAngle = Math.atan2(vertices[0].x, vertices[0].y);
-        this.applyMatrix(new THREE.Matrix4().makeRotationZ(rotateAngle - halfToothAngle));
-
-        //Create bottom
-
-        v = vertices[lastInvoluteVertex].clone().setLength(rootRadius);
-        v2 = v.clone();
-        v2.z = width;
-        vertices.push(v);
-        vertices.push(v2);
-        l = vertices.length;
-        this.faces.push(new THREE.Face3(l - 1, l - 2, lastInvoluteDeepVertex));
-        this.faces.push(new THREE.Face3(lastInvoluteDeepVertex, l - 2, lastInvoluteVertex));
-
-        v = vertices[firstInvoluteVertex].clone().setLength(rootRadius);
-        v2 = v.clone();
-        v2.z = width;
-        vertices.push(v);
-        vertices.push(v2);
-        l = vertices.length;
-        this.faces.push(new THREE.Face3(l - 1, l - 2, firstInvoluteDeepVertex));
-        this.faces.push(new THREE.Face3(firstInvoluteDeepVertex, l - 2, firstInvoluteVertex));
-
-        this.faces.push(new THREE.Face3(l - 4, l - 2, lastInvoluteVertex));
-        this.faces.push(new THREE.Face3(l - 2, lastInvoluteVertex, firstInvoluteVertex));
-        this.faces.push(new THREE.Face3(l - 3, l - 1, lastInvoluteDeepVertex));
-        this.faces.push(new THREE.Face3(l - 1, lastInvoluteDeepVertex, firstInvoluteDeepVertex));
-
-
+        this.applyMatrix(new THREE.Matrix4().makeRotationZ( Math.PI/2));
 
         this.mergeVertices();
         this.computeFaceNormals();
@@ -125,22 +120,12 @@ define(['views/BasicRotatingPartMesh','views/InvoluteToothGeometry'], function(B
     BevelInvoluteToothGeometry.prototype.constructor = BevelInvoluteToothGeometry;
 
 
-    return BevelInvoluteToothGeometry
-
-
     var BevelGearGeometry = function (bevelGear) {
 
         THREE.Geometry.call(this);
+        var bottomRadius = bevelGear.bottomRadius();
+        var topRadius = bevelGear.topRadius();
 
-
-        var backConeDist = bevelGear.coneDistance*Math.tan(bevelGear.pitchConeAngle);
-        var dedendum = 2.188/bevelGear.diametralPitch-bevelGear.addendum;
-        var bottomRadius = (backConeDist-dedendum)*Math.cos(bevelGear.pitchConeAngle);
-        var topRadius = bottomRadius-2*bevelGear.width/Math.tan(Math.PI/2-bevelGear.pitchConeAngle);
-
-        if (bevelGear.innerRadius>topRadius) {
-            alert("Top radius too big");
-        }
 
         var mIdentity = new THREE.Matrix4();
         //create wheel
@@ -152,56 +137,37 @@ define(['views/BasicRotatingPartMesh','views/InvoluteToothGeometry'], function(B
             new THREE.Vector3(bevelGear.innerRadius, 0, 0)
         ];
 
-        var gear = new THREE.LatheGeometry(wheelPoints, Math.ceil(10 * bevelGear.rootRadius));
-        //this.merge(gear, mIdentity);
+        var gear = new THREE.LatheGeometry(wheelPoints, Math.ceil(10 * bottomRadius));
+        this.merge(gear, mIdentity);
 
 
         //create teeth
-        var faceWidth = bevelGear.width/Math.cos(Math.PI/2-bevelGear.pitchConeAngle);
-        if (faceWidth>10/bevelGear.diametralPitch || faceWidth>bevelGear.coneDistance/3) {
-            alert("HUY");
-        }
-        var childPitchConeAngle = Math.PI/2 - bevelGear.pitchConeAngle;
-        var childAddendum = 0.54 / bevelGear.diametralPitch + 0.46 / (bevelGear.diametralPitch * ((bevelGear.childTeeth * Math.cos(bevelGear.pitchConeAngle)) / (bevelGear.teeth * Math.cos(childPitchConeAngle))));
-        var addendumAngle = Math.atan(childAddendum/bevelGear.coneDistance);
-
         var mRotate = new THREE.Matrix4();
-        var tooth = new BevelInvoluteToothGeometry(faceWidth, bevelGear.baseCircleRadius, addendumAngle, bevelGear.rootRadius, bevelGear.pressureAngle, bevelGear.teeth);
+        var tooth = new BevelInvoluteToothGeometry(bevelGear);
         for (var i = 0; i < 2 * Math.PI; i += Math.PI * 2 / bevelGear.teeth) {
-            mRotate.makeRotationZ(i);
-            this.merge(tooth.clone(), mRotate);
-        }
+         mRotate.makeRotationZ(i);
+         this.merge(tooth.clone(), mRotate);
+         }
 
         this.mergeVertices();
 
-        this.applyMatrix(new THREE.Matrix4().makeTranslation(0, 0, -bevelGear.width / 2));
+        this.applyMatrix(new THREE.Matrix4().makeTranslation(0, 0, -bevelGear.width/2));
 
     };
 
     BevelGearGeometry.prototype = new THREE.Geometry();
     BevelGearGeometry.prototype.constructor = BevelGearGeometry;
 
-    function BevelMesh(bevelGear) {
+    function BevelGearMesh(bevelGear) {
         BasicRotatingPartMesh.call(this, new BevelGearGeometry(bevelGear), new THREE.MeshBasicMaterial({
             color: Math.floor((Math.random() * 0xFFFFFF) + 1),
-            side: THREE.DoubleSide
+            side: THREE.DoubleSide,
+            wireframe: true
         }), bevelGear);
-        this.lookAt(bevelGear.axis);
-        this.up.copy(bevelGear.up);
-        var o = this;
-        var updateAngle = function (angle) {
-            if (bevelGear.clockwise)
-                o.rotation.z = -angle;
-            else
-                o.rotation.z = angle;
-        };
-        //bevelGear.addListener("angle", updateAngle);
-        updateAngle(bevelGear.angle);
-        this.position.copy(bevelGear.position);
     }
 
-    BevelMesh.prototype = BasicRotatingPartMesh.prototype;
-    BevelMesh.prototype.constructor = BevelMesh;
+    BevelGearMesh.prototype = BasicRotatingPartMesh.prototype;
+    BevelGearMesh.prototype.constructor = BevelGearMesh;
 
-    return BevelMesh;
+    return BevelGearMesh;
 });

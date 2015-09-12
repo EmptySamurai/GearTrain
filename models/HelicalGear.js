@@ -6,52 +6,56 @@ define(['models/Gear', 'models/Shaft', 'geometry/Cylinder'], function (Gear, Sha
 
     function HelicalGear(params, shaft, parentGear) {
         Gear.call(this, params, shaft, parentGear);
-        this.type = 'HelicalGear';
+        this.type = HelicalGear.type;
         this.normalDiametralPitch = params.normalDiametralPitch;
         this.pressureAngle = params.pressureAngle;
         this.helixAngle = params.helixAngle;
         this.handedness = params.handedness;
-        this.radialPressureAngle = Math.atan(Math.tan(this.pressureAngle) / Math.cos(this.helixAngle));
-        this.pitchCircleDiameter = this.teeth / (this.normalDiametralPitch * Math.cos(this.helixAngle));
-        this.baseCircleRadius = this.pitchCircleDiameter * Math.cos(this.radialPressureAngle) / 2;
-        this.outsideCircleRadius = (this.pitchCircleDiameter + 2 / this.normalDiametralPitch) / 2;
-        this.addendumAngle = Math.sqrt(this.outsideCircleRadius * this.outsideCircleRadius - this.baseCircleRadius * this.baseCircleRadius) / this.baseCircleRadius;
-        this.rootRadius = (this.pitchCircleDiameter - 2.4 / this.normalDiametralPitch) / 2;
-        if (this.rootRadius <= this.innerRadius) {
+        if (this.rootRadius() <= this.innerRadius) {
             throw new Error("Inner radius larger than root radius");
         }
 
         //according to http://www.rmcet.com/lib/Resources/E-Books/Mech-auto/E-Books%20Machine%20Design-Khurmi%20R.s/CHP-29.pdf
-        var axialPitch = this.normalDiametralPitch / Math.sin(this.helixAngle);
-        if (this.width * Math.tan(this.helixAngle) < axialPitch) {
+        if (this.width * Math.tan(this.helixAngle) < this.axialPitch()) {
             throw new Error("Overlap should be at least equal to axial pitch");
         }
 
-        var o = this;
-        var intersections = [];
-        var checkIntersection = function (e) {
-            if (e != shaft && e != parentGear) {
-                if (o.intersects(e)) {
-                    intersections.push(e);
-                }
-            }
-        };
-        if (parentGear) {
-            parentGear.iterate(checkIntersection);
-        } else if (shaft) {
-            shaft.iterate(checkIntersection);
-        }
-        if (intersections.length > 0) {
+        if (this.getIntersections().length > 0) {
             throw new Error("Helical gear is intersecting");
         }
-
     }
 
     HelicalGear.prototype = Object.create(Gear.prototype);
 
+    HelicalGear.type = 'HelicalGear';
+
+    HelicalGear.prototype.radialPressureAngle = function() {
+        return Math.atan(Math.tan(this.pressureAngle) / Math.cos(this.helixAngle));
+    };
+
+    HelicalGear.prototype.pitchCircleDiameter = function () {
+        return this.teeth / (this.normalDiametralPitch * Math.cos(this.helixAngle));
+    };
+
+    HelicalGear.prototype.baseCircleRadius = function () {
+        return this.pitchCircleDiameter() * Math.cos(this.radialPressureAngle()) / 2;
+    };
+
+    HelicalGear.prototype.outsideCircleRadius = function () {
+        return (this.pitchCircleDiameter() + 2 / this.normalDiametralPitch) / 2;
+    };
+
+    HelicalGear.prototype.rootRadius = function () {
+        return (this.pitchCircleDiameter() - 2.4 / this.normalDiametralPitch) / 2;
+    };
+
+    HelicalGear.prototype.axialPitch = function () {
+        return this.normalDiametralPitch / Math.sin(this.helixAngle);
+    };
+
 
     HelicalGear.prototype.toCylinder = function () {
-        return new Cylinder(this.position.toArray(), this.axis.toArray(), this.outsideCircleRadius, this.width);
+        return new Cylinder(this.position.toArray(), this.axis.toArray(), this.outsideCircleRadius(), this.width);
     };
 
     HelicalGear.LEFT_HANDED = 'left';
@@ -64,7 +68,12 @@ define(['models/Gear', 'models/Shaft', 'geometry/Cylinder'], function (Gear, Sha
      * @param position Position of the gear (will be projected to the axis)
      */
     HelicalGear.connectToShaft = function (shaft, params, position) {
-        position.projectOnVector(shaft.axis).add(shaft.position);
+        if (shaft.length<params.width) {
+            throw new Error('Width of helical gear is larger than shaft length');
+        }
+        var halfAvailableShaft = shaft.axis.clone().setLength(shaft.length/2-params.width/2);
+        var axisLine = new THREE.Line3(shaft.position.clone().add(halfAvailableShaft), shaft.position.clone().sub(halfAvailableShaft));
+        position = axisLine.closestPointToPoint(position, true);
         params.position = position;
         params.speed = shaft.speed;
         params.axis = shaft.axis;
@@ -105,7 +114,7 @@ define(['models/Gear', 'models/Shaft', 'geometry/Cylinder'], function (Gear, Sha
         //Do not subtract jointAngle since up of the connected gear is direction itself
         console.log("asd");
         //params.angle = Math.PI + (this.angle - jointAngle) * ratio;
-        params.angle = Math.PI /*+ 2 * Math.PI / params.teeth / 2 */+  (this.angle - jointAngle) * ratio;
+        params.angle = Math.PI /*+ 2 * Math.PI / params.teeth / 2 */ + (this.angle - jointAngle) * ratio;
         params.normalDiametralPitch = this.normalDiametralPitch;
         params.pressureAngle = this.pressureAngle;
         var distance = ((this.teeth / Math.cos(this.helixAngle) + params.teeth / Math.cos(params.helixAngle)) / this.normalDiametralPitch) / 2;
