@@ -22,19 +22,23 @@
 </head>
 <body>
 
-<div id="mouse_action" class="select_control">
+<div id="mouse_action" class="control">
     Mouse Action: <br>
-    <input type="radio" name="mouseaction" value="add_remove"> Add/Remove<br>
     <input type="radio" name="mouseaction" value="info"> Info<br>
+    <input type="radio" name="mouseaction" value="add_remove"> Add/Remove<br>
 </div>
 
-<div id="gear_type" class="select_control">
+<div id="gear_type" class="control">
     Type of gear: <br>
     <input type="radio" name="geartype" value="spur"> Spur<br>
     <input type="radio" name="geartype" value="bevel"> Bevel<br>
     <input type="radio" name="geartype" value="helical"> Helical<br>
 </div>
 
+<div id="speed" class="control">
+    Speed <br>
+    <input id="speed_input">
+</div>
 <div id="info_box">
     <div id="element_type"></div>
     <table id="element_properties">

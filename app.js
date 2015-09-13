@@ -1,5 +1,5 @@
 define(function () {
-    require(['controllers/GearTrainController'], function (GearTrainController) {
+    require(['controllers/GearTrainController', 'ui/MessageBox'], function (GearTrainController, MessageBox) {
 
 
         function strToBool(str) {
@@ -19,6 +19,15 @@ define(function () {
             }
         }
 
+        function getNumberCookieOrDefault(name, def) {
+            var value = Cookies.get(name);
+            if (isUndefined(value) || !$.isNumeric(value)) {
+                return def;
+            } else {
+                return Number(value);
+            }
+        }
+
         function getStringCookieOrDefault(name, def) {
             var value = Cookies.get(name);
             if (isUndefined(value)) {
@@ -35,6 +44,9 @@ define(function () {
             var mouseAction = getStringCookieOrDefault('mouseaction', 'add_remove');
             $('input[name="mouseaction"][value="'+mouseAction+'"]').prop('checked', true);
 
+            var speed = getNumberCookieOrDefault('speed', 1);
+            $('#speed_input').val(speed);
+
             var showLogs = getBooleanCookieOrDefault('showlogs', true);
             $('#show_logs').prop('checked', showLogs);
 
@@ -49,6 +61,12 @@ define(function () {
             });
             $('input[name="mouseaction"]:radio').change(function() {
                 Cookies.set('mouseaction', $(this).val(), {path: ''});
+            });
+            $('#speed_input').change(function() {
+                var speed = $(this).val();
+                if ($.isNumeric(speed)) {
+                    Cookies.set('speed', speed, {path: ''});
+                }
             });
             $('#show_logs').change(function() {
                 Cookies.set('showlogs', this.checked,  {path: ''});
@@ -101,6 +119,7 @@ define(function () {
                    e.preventDefault();
                }
             });
+
         }
 
         $(document).ready(function () {
@@ -135,7 +154,11 @@ define(function () {
 
 
             camera.position.z = 20;
+            camera.position.y = 20;
             var controller = new GearTrainController(null, scene, camera);
+
+            var messageBox = new MessageBox();
+            messageBox.log('See documentation and source code at <a href="https://github.com/EmptySamurai/GearTrain">https://github.com/EmptySamurai/GearTrain</a>');
 
 
             function animate() {

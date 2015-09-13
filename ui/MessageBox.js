@@ -1,6 +1,3 @@
-/**
- * Created by emptysamurai on 25-Aug-15.
- */
 
 define(function() {
     function div() {
@@ -12,8 +9,33 @@ define(function() {
     }
 
     function MessageBox() {
+        this.messages = $("#messages");
+    }
+
+    MessageBox.prototype.scrollToBottom = function () {
+        this.messages.scrollTop(this.messages[0].scrollHeight);
+    };
+
+    MessageBox.prototype.addMessageWithClass =function(message, c) {
+        var messageDiv = div();
+        messageDiv.className = "message "+c;
+        messageDiv.innerHTML = message;
+        messageDiv.appendChild(hr());
+        this.messages.append(messageDiv);
+        this.scrollToBottom();
+    };
+
+    MessageBox.prototype.log = function (message) {
+        this.addMessageWithClass(message, "log");
+    };
+
+    MessageBox.prototype.err = function (message) {
+        this.addMessageWithClass(message, "error")
+    };
+
+    //add event handlers only one time
+    $(document).ready(function() {
         var messages = $("#messages");
-        this.messages = messages;
 
         $("#show_logs").click(function() {
             var style = $("#logs_style");
@@ -36,30 +58,7 @@ define(function() {
         $("#clear_messages").click(function() {
             messages.empty();
         });
-
-
-    }
-
-    MessageBox.prototype.scrollToBottom = function () {
-        this.messages.scrollTop(this.messages[0].scrollHeight);
-    };
-
-    MessageBox.prototype.addMessageWithClass =function(message, c) {
-        var messageDiv = div();
-        messageDiv.className = "message "+c;
-        messageDiv.textContent = message;
-        messageDiv.appendChild(hr());
-        this.messages.append(messageDiv);
-        this.scrollToBottom();
-    };
-
-    MessageBox.prototype.log = function (message) {
-        this.addMessageWithClass(message, "log");
-    };
-
-    MessageBox.prototype.err = function (message) {
-        this.addMessageWithClass(message, "error")
-    };
+    });
 
     return MessageBox;
 });

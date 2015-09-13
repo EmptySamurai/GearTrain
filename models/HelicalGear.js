@@ -1,8 +1,9 @@
-/**
- * Created by emptysamurai on 27-Aug-15.
+/*
+ * Based mostly on "Elements of Metric Gear Technology"
+ * http://sdp-si.com/resources/Elements_Gear_Technology.zip
  */
 
-define(['models/Gear', 'models/Shaft', 'geometry/Cylinder'], function (Gear, Shaft, Cylinder) {
+define(['models/Gear', 'models/Shaft', 'math/Cylinder'], function (Gear, Shaft, Cylinder) {
 
     function HelicalGear(params, shaft, parentGear) {
         Gear.call(this, params, shaft, parentGear);
@@ -21,7 +22,7 @@ define(['models/Gear', 'models/Shaft', 'geometry/Cylinder'], function (Gear, Sha
         }
 
         if (this.getIntersections().length > 0) {
-            throw new Error("Helical gear is intersecting");
+            throw new Error("Helical gear has intersections");
         }
     }
 
@@ -68,14 +69,9 @@ define(['models/Gear', 'models/Shaft', 'geometry/Cylinder'], function (Gear, Sha
      * @param position Position of the gear (will be projected to the axis)
      */
     HelicalGear.connectToShaft = function (shaft, params, position) {
-        if (shaft.length<params.width) {
-            throw new Error('Width of helical gear is larger than shaft length');
-        }
-        var halfAvailableShaft = shaft.axis.clone().setLength(shaft.length/2-params.width/2);
-        var axisLine = new THREE.Line3(shaft.position.clone().add(halfAvailableShaft), shaft.position.clone().sub(halfAvailableShaft));
-        position = axisLine.closestPointToPoint(position, true);
+        position = shaft.getClosestPositionForGear(position, params.width);
         params.position = position;
-        params.speed = shaft.speed;
+        params.totalRatio = shaft.totalRatio;
         params.axis = shaft.axis;
         params.clockwise = shaft.clockwise;
         params.angle = 0;
@@ -90,17 +86,21 @@ define(['models/Gear', 'models/Shaft', 'geometry/Cylinder'], function (Gear, Sha
     /**
      *
      * @param params Object containing teeth, inner radius
-     * @param direction The direction of connection *
+     * @param direction The direction of connection
      * @return {HelicalGear} connected gear
      */
     HelicalGear.prototype.connectGear = function (params, direction) {
         var shaftAngle = Math.PI / 2;
         params.teeth = Math.max(4, params.teeth);
         params.helixAngle = shaftAngle - this.helixAngle;
-        var ratio = (this.teeth * Math.cos(params.helixAngle)) / ( params.teeth * Math.cos(params.helixAngle));
-        params.speed = this.speed * ratio;
+        var ratio = (this.teeth * Math.cos(params.helixAngle)) / ( params.teeth * Math.cos(this.helixAngle));
+        params.totalRatio = this.totalRatio * ratio;
         params.clockwise = !this.clockwise;
         params.handedness = this.handedness;
+        params.up = direction.clone().normalize();
+        params.width = this.width;
+        params.normalDiametralPitch = this.normalDiametralPitch;
+        params.pressureAngle = this.pressureAngle;
         var up = this.up;
         direction.normalize();
         up.normalize();
@@ -111,19 +111,13 @@ define(['models/Gear', 'models/Shaft', 'geometry/Cylinder'], function (Gear, Sha
         }
         jointAngle = this.clockwise ? jointAngle : -jointAngle;
 
-        //Do not subtract jointAngle since up of the connected gear is direction itself
-        console.log("asd");
-        //params.angle = Math.PI + (this.angle - jointAngle) * ratio;
-        params.angle = Math.PI /*+ 2 * Math.PI / params.teeth / 2 */ + (this.angle - jointAngle) * ratio;
-        params.normalDiametralPitch = this.normalDiametralPitch;
-        params.pressureAngle = this.pressureAngle;
+        params.angle = Math.PI +(this.angle - jointAngle) * ratio;
+
         var distance = ((this.teeth / Math.cos(this.helixAngle) + params.teeth / Math.cos(params.helixAngle)) / this.normalDiametralPitch) / 2;
         params.position = this.position.clone().add(direction.clone().multiplyScalar(distance));
         params.axis = new THREE.Vector3().crossVectors(this.axis, direction).normalize().negate();
-        params.width = this.width;
         params.radius = params.innerRadius;
         params.length = this.width * 3;
-        params.up = direction.clone().normalize();
         var shaft = new Shaft(params, this);
         var gear = new HelicalGear(params, shaft, this);
         shaft.gears.push(gear);

@@ -1,6 +1,3 @@
-/**
- * Created by emptysamurai on 03-May-15.
- */
 
 define(['views/BasicRotatingPartMesh'], function (BasicRotatingPartMesh) {
 

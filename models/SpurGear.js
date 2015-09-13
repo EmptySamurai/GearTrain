@@ -1,8 +1,9 @@
-/**
- * Created by emptysamurai on 25-Aug-15.
+/*
+ * Based mostly on "Elements of Metric Gear Technology"
+ * http://sdp-si.com/resources/Elements_Gear_Technology.zip
  */
 
-define(['models/Gear', 'models/Shaft', 'geometry/Cylinder'], function (Gear, Shaft, Cylinder) {
+define(['models/Gear', 'models/Shaft', 'math/Cylinder'], function (Gear, Shaft, Cylinder) {
 
     function SpurGear(params, shaft, parentGear) {
         Gear.call(this, params, shaft, parentGear);
@@ -14,7 +15,7 @@ define(['models/Gear', 'models/Shaft', 'geometry/Cylinder'], function (Gear, Sha
         }
 
         if (this.getIntersections().length > 0) {
-            throw new Error("Spur gear is intersecting");
+            throw new Error("Spur gear has intersections");
         }
     }
 
@@ -39,8 +40,9 @@ define(['models/Gear', 'models/Shaft', 'geometry/Cylinder'], function (Gear, Sha
     };
 
     SpurGear.prototype.toCylinder = function () {
-        return new Cylinder(this.position.toArray(), this.axis.toArray(), this.outsideCircleRadius, this.width);
+        return new Cylinder(this.position.toArray(), this.axis.toArray(), this.outsideCircleRadius(), this.width);
     };
+
 
     /**
      * Connects new gear to shaft
@@ -49,14 +51,9 @@ define(['models/Gear', 'models/Shaft', 'geometry/Cylinder'], function (Gear, Sha
      * @param position Position of the gear (will be projected to the axis)
      */
     SpurGear.connectToShaft = function (shaft, params, position) {
-        if (shaft.length<params.width) {
-            throw new Error('Width of spur gear is larger than shaft length');
-        }
-        var halfAvailableShaft = shaft.axis.clone().setLength(shaft.length/2-params.width/2);
-        var axisLine = new THREE.Line3(shaft.position.clone().add(halfAvailableShaft), shaft.position.clone().sub(halfAvailableShaft));
-        position = axisLine.closestPointToPoint(position, true);
+        position = shaft.getClosestPositionForGear(position, params.width);
         params.position = position;
-        params.speed = shaft.speed;
+        params.totalRatio = shaft.totalRatio;
         params.axis = shaft.axis;
         params.clockwise = shaft.clockwise;
         params.angle = 0;
@@ -75,7 +72,7 @@ define(['models/Gear', 'models/Shaft', 'geometry/Cylinder'], function (Gear, Sha
     SpurGear.prototype.connectGear = function (params, direction) {
         params.teeth = Math.max(4, params.teeth);
         var ratio = this.teeth / params.teeth;
-        params.speed = this.speed * ratio;
+        params.totalRatio = this.totalRatio*ratio;
         params.clockwise = !this.clockwise;
         params.up = direction.clone().normalize();
         var up = this.up;

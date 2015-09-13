@@ -1,6 +1,3 @@
-/**
- * Created by emptysamurai on 25-Aug-15.
- */
 
 define(['models/BaseRotatingPart', 'models/Shaft'], function (BaseRotatingPart, Shaft) {
 
@@ -15,6 +12,7 @@ define(['models/BaseRotatingPart', 'models/Shaft'], function (BaseRotatingPart, 
     }
 
     Gear.prototype.__proto__ = BaseRotatingPart.prototype;
+
 
     Gear.prototype.iterate = function (f, initiator) {
         f(this);

@@ -1,6 +1,4 @@
-/**
- * Created by emptysamurai on 04-Sep-15.
- */
+
 define(function() {
     function tr() {
         return $(document.createElement("tr"));
@@ -20,9 +18,14 @@ define(function() {
         this.elementProperties.empty();
     };
 
-    InfoBox.prototype.show = function(type, properties) {
+    InfoBox.prototype.show = function(title, properties) {
+        this.clear();
         this.elementType.text(type);
+        for (var key in properties) {
 
-    }
-})
+        }
+    };
+
+    return InfoBox;
+});
 

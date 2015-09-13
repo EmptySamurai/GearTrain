@@ -1,9 +1,9 @@
-/**
- * Created by emptysamurai on 25-Aug-15.
+/*
+ * Based mostly on "Elements of Metric Gear Technology"
+ * http://sdp-si.com/resources/Elements_Gear_Technology.zip
  */
 
-define(['models/Gear', 'models/Shaft', 'geometry/Cylinder'], function (Gear, Shaft, Cylinder) {
-    //http://www.sdp-si.com/D805/D805_PDFS/Technical/8050T060.pdf
+define(['models/Gear', 'models/Shaft', 'math/Cylinder'], function (Gear, Shaft, Cylinder) {
 
     function BevelGear(params, shaft, parent) {
         Gear.call(this, params, shaft, parent);
@@ -21,9 +21,9 @@ define(['models/Gear', 'models/Shaft', 'geometry/Cylinder'], function (Gear, Sha
             throw new Error("Face width is too large");
         }
 
-         if (this.getIntersections().length > 0) {
-         throw new Error("Bevel gear is intersecting");
-         }
+        if (this.getIntersections().length > 0) {
+            throw new Error("Bevel gear has intersections");
+        }
     }
 
     BevelGear.prototype = Object.create(Gear.prototype);
@@ -116,10 +116,11 @@ define(['models/Gear', 'models/Shaft', 'geometry/Cylinder'], function (Gear, Sha
         //Calculate addition to gear's width, since smaller end of tooth is over the top plane
         var heightAddition = smallSideHeight * Math.cos((Math.PI - this.outerConeAngle()) - (Math.PI / 2 - addendumAngle));
         var totalHeight = this.width + heightAddition;
-        var position = this.position.clone().add(this.axis.clone().setLength(heightAddition/2));
+        var position = this.position.clone().add(this.axis.clone().setLength(heightAddition / 2));
 
         return new Cylinder(position.toArray(), this.axis.toArray(), bevelGearOutsideRadius, totalHeight);
     };
+
 
     /**
      * Connects new bevel gear to shaft
@@ -133,15 +134,15 @@ define(['models/Gear', 'models/Shaft', 'geometry/Cylinder'], function (Gear, Sha
         var alongAxis;
         if (firstEnd.distanceTo(position) < secondEnd.distanceTo(position)) {
             params.position = firstEnd;
-            alongAxis = true;
+            params.axis = shaft.axis;
+            params.clockwise = shaft.clockwise;
         } else {
             params.position = secondEnd;
-            alongAxis = false;
+            params.axis = shaft.axis.clone.negate();
+            params.clockwise = !shaft.clockwise;
         }
         params.shaft = shaft;
-        params.speed = shaft.speed;
-        params.axis = alongAxis ? shaft.axis : shaft.axis.clone().negate();
-        params.clockwise = alongAxis ? shaft.clockwise : !shaft.clockwise;
+        params.totalRatio = shaft.totalRatio;
         params.angle = 0;
         params.innerRadius = shaft.radius;
 
@@ -164,7 +165,7 @@ define(['models/Gear', 'models/Shaft', 'geometry/Cylinder'], function (Gear, Sha
         params.radius = params.innerRadius;
         params.up = this.axis.clone();
         var ratio = this.teeth / params.teeth;
-        params.speed = this.speed * ratio;
+        params.totalRatio = this.totalRatio * ratio;
         params.clockwise = !this.clockwise;
         var up = this.up;
         direction.normalize();

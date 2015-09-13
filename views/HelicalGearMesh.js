@@ -103,13 +103,16 @@ define(['views/BasicRotatingPartMesh', 'models/HelicalGear'], function (BasicRot
             }
         }
 
-        //Rotate so that tooth will be centered by Y axis
-        var maxAngle =  Math.atan2(Math.cos(tMax), Math.sin(tMax));
-        var halfToothAngleAtPitchCircle = Math.PI / (2 * teeth);
-        //var rotateAngle = Math.atan2(vertices[vertexesCount-2].x, vertices[vertexesCount-2].y) + halfToothAngleAtBaseCircle-halfToothAngleAtPitchCircle+maxAngle/2;
-        var rotateAngle =Math.atan2(vertices[vertexesCount-2].x, vertices[vertexesCount-2].y) + halfToothAngleAtBaseCircle-halfToothAngleAtPitchCircle;
-        this.applyMatrix(new THREE.Matrix4().makeRotationZ(rotateAngle));
+        if (helicalGear.handedness == HelicalGear.LEFT_HANDED)
+            maxAngle = Math.PI/2-Math.atan2(Math.cos(tMax), Math.sin(tMax));
+        else
+            maxAngle = -Math.atan2(-Math.sin(tMax), Math.cos(tMax));
 
+        var halfToothAngleAtPitchCircle = Math.PI / (2 * teeth);
+        var angleFromBaseToPitchCircle = (halfToothAngleAtBaseCircle-halfToothAngleAtPitchCircle);
+        var angleToLastInvoluteVertex = Math.atan2(vertices[vertexesCount-2].x, vertices[vertexesCount-2].y);
+        var rotateAngle = angleToLastInvoluteVertex+ angleFromBaseToPitchCircle + maxAngle/2; //TODO: find out why this works
+        this.applyMatrix(new THREE.Matrix4().makeRotationZ(rotateAngle));
 
 
         this.mergeVertices();

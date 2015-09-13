@@ -1,10 +1,8 @@
-/**
- * Created by emptysamurai on 25-Aug-15.
- */
 
 define(function() {
-    function GearTrain(driverShaft) {
+    function GearTrain(driverShaft, speed) {
         this.driverShaft = driverShaft;
+        this.speed = speed;
 
         this._started = false;
         var o = this;
@@ -43,7 +41,7 @@ define(function() {
             throw new Error("Can't remove driver shaft");
         }
 
-        this.removeGear(shaft.getCreatingGear());
+        this.removeGear(shaft.getParentGear());
     };
 
 
@@ -64,8 +62,9 @@ define(function() {
     };
 
     GearTrain.prototype.update = function (ms) {
+        var o = this;
         this.iterate(function (e) {
-            e.rotate(ms);
+            e.rotate(o.speed, ms);
         });
     };
 
