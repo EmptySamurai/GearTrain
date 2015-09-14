@@ -165,8 +165,11 @@ define(['views/BasicRotatingPartMesh', 'models/HelicalGear'], function (BasicRot
     HelicalGearGeometry.prototype.constructor = HelicalGearGeometry;
 
     function HelicalGearMesh(helicalGear) {
+        if (!helicalGear.color) {
+            helicalGear.color = Math.floor((Math.random() * 0xFFFFFF) + 1);
+        }
         BasicRotatingPartMesh.call(this, new HelicalGearGeometry(helicalGear), new THREE.MeshBasicMaterial({
-            color: Math.floor((Math.random() * 0xFFFFFF) + 1),
+            color: helicalGear.color,
             side: THREE.DoubleSide,
             wireframe: true
         }), helicalGear);

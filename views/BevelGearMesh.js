@@ -156,8 +156,11 @@ define(['views/BasicRotatingPartMesh'], function (BasicRotatingPartMesh) {
     BevelGearGeometry.prototype.constructor = BevelGearGeometry;
 
     function BevelGearMesh(bevelGear) {
+        if (!bevelGear.color) {
+            bevelGear.color = Math.floor((Math.random() * 0xFFFFFF) + 1);
+        }
         BasicRotatingPartMesh.call(this, new BevelGearGeometry(bevelGear), new THREE.MeshBasicMaterial({
-            color: Math.floor((Math.random() * 0xFFFFFF) + 1),
+            color: bevelGear.color,
             side: THREE.DoubleSide,
             wireframe: true
         }), bevelGear);

@@ -3,15 +3,20 @@ define(function() {
     /**
      *
      * @param properties Object map where key is property name and value is object containing type, label and validator for property
-     * @constructor
+     * @param params.buttons - Shown buttons. Available values: ModalForm.OK_CANCEL (default), ModalForm.OK
+     * @param params.title - Title of the form
+     * @param params Configuration parameters
      */
-    function ModalForm(properties, header) {
+    function ModalForm(properties, params) {
+        params = params || {};
         this.propeties = properties;
+        this.buttons = params.buttons || ModalForm.OK_CANCEL;
         this.form = $("<div class=\"modal_form\">");
         var insideForm = $("<div class=\"inner_modal_form\">");
         this.form.append(insideForm);
-        if (header) {
-            insideForm.appendChild($("<h3>" + header + "</h3>"));
+        var title = params.title;
+        if (title) {
+            insideForm.append($("<h3>" + title + "</h3>"));
         }
         for (var name in properties) {
             var prop = properties[name];
@@ -28,10 +33,26 @@ define(function() {
             insideForm.append($("<br>"));
         }
         this.buttonOk = $("<button>OK</button>");
-        this.buttonCancel = $("<button>Cancel</button>");
         insideForm.append(this.buttonOk);
-        insideForm.append(this.buttonCancel);
+
+        if (this.hasCancelButton()) {
+            this.buttonCancel = $("<button>Cancel</button>");
+            insideForm.append(this.buttonCancel);
+        }
     }
+
+    ModalForm.OK_CANCEL = 1;
+    ModalForm.OK = 2;
+
+    ModalForm.validators = {
+        positiveNumber: function(n) {
+            return n>0;
+        }
+    };
+
+    ModalForm.prototype.hasCancelButton = function() {
+        return this.buttons == ModalForm.OK_CANCEL;
+    };
 
     ModalForm.prototype.show = function (f) {
         var o = this;
@@ -39,15 +60,17 @@ define(function() {
             o.form.remove();
         };
 
-        this.buttonCancel.on('click', function () {
-            var e = {
-                prevent: false,
-                ok: false
-            };
-            f(e);
-            if (!e.prevent)
-                close();
-        });
+        if (this.hasCancelButton()) {
+            this.buttonCancel.on('click', function () {
+                var e = {
+                    prevent: false,
+                    ok: false
+                };
+                f(e);
+                if (!e.prevent)
+                    close();
+            });
+        }
         this.buttonOk.on('click', function () {
             try {
                 var values = o.getValues();

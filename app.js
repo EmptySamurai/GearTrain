@@ -44,7 +44,7 @@ define(function () {
             var mouseAction = getStringCookieOrDefault('mouseaction', 'add_remove');
             $('input[name="mouseaction"][value="'+mouseAction+'"]').prop('checked', true);
 
-            var speed = getNumberCookieOrDefault('speed', 1);
+            var speed = getNumberCookieOrDefault('speed', GearTrainController.DEFAULT_SPEED);
             $('#speed_input').val(speed);
 
             var showLogs = getBooleanCookieOrDefault('showlogs', true);
@@ -127,6 +127,9 @@ define(function () {
             setSettingsFromCookies();
             updateSettingsOnChange();
             addShortcuts();
+            $("#speed_input").change(function() {
+                $(this).blur();
+            });
 
             var scene = new THREE.Scene();
             var camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
@@ -151,7 +154,6 @@ define(function () {
             controls.dynamicDampingFactor = 0.3;
 
             controls.keys = [65, 83, 68];
-
 
             camera.position.z = 20;
             camera.position.y = 20;

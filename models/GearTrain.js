@@ -13,13 +13,10 @@ define(function() {
         });
     }
 
-
     GearTrain.prototype.iterate = function (f) {
         if (this.driverShaft)
             this.driverShaft.iterate(f);
     };
-
-
 
     GearTrain.prototype.removeGear = function (gear) {
         var i;

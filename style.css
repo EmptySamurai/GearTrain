@@ -40,6 +40,34 @@ canvas {
     margin-bottom: 3px;
 }
 
+#info_box {
+    top: 60px;
+    min-width: 100px;
+    right: 20px;
+    background: #F5F5F5;
+    position: absolute;
+}
+
+#info_box * {
+    text-align: right;
+}
+
+#element_type {
+    font-weight: bold;
+}
+
+#element_properties {
+    border-collapse: collapse;
+}
+
+#element_properties tr, td {
+    border: 1px solid black;
+}
+
+#element_properties tr:nth-child(odd) {
+    background: white;
+}
+
 .modal_form {
     position: fixed;
     top: 0;
@@ -67,6 +95,10 @@ canvas {
 
 .modal_form > div > button {
     margin-right: 5px;
+}
+
+.modal_form h3 {
+    margin: 5px 0 15px 0;
 }
 
 #message_box {

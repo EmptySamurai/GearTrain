@@ -101,114 +101,6 @@ define(['views/BasicRotatingPartMesh'], function (BasicRotatingPartMesh) {
         this.faces.push(new THREE.Face3(l - 1, lastInvoluteDeepVertex, firstInvoluteDeepVertex));
 
 
-        /*
-         //Create undercuts
-
-         //Parameters for right undercut
-
-         var filletRadius = 0.35 / gear.diametralPitch;
-         var rootRadius = gear.rootRadius;
-         var distanceToFilletCenter = rootRadius + filletRadius;
-         var lengthBetweenCenterAndFilletEnd = Math.sqrt(distanceToFilletCenter * distanceToFilletCenter - filletRadius * filletRadius);
-         var filletStart = vertices[firstInvoluteVertex].clone().setLength(lengthBetweenCenterAndFilletEnd);
-         var thetaLength = Math.acos(filletRadius / distanceToFilletCenter);
-         var axisZ = new THREE.Vector3(0, 0, 1);
-         var rotate = Math.asin(filletRadius / distanceToFilletCenter);
-         var filletCenter = filletStart.clone().applyAxisAngle(axisZ, -rotate).setLength(distanceToFilletCenter);
-         var radiusToInvolute = filletStart.clone().sub(filletCenter);
-         radiusToInvolute.normalize();
-
-         var axisX = new THREE.Vector3(1, 0, 0);
-
-         var thetaStart = Math.acos(radiusToInvolute.dot(axisX));
-         var cross = new THREE.Vector3().crossVectors(radiusToInvolute, axisX);
-         if (axisZ.dot(cross) < 0) {
-         thetaStart = -thetaStart;
-         }
-         if (thetaStart < 0) {
-         thetaStart += 2 * Math.PI;
-         }
-
-         step = thetaLength / segments;
-
-         //Create right undercut
-
-         v = filletStart.clone();
-         v2 = v.clone();
-         v2.z = gear.width;
-         vertices.push(v);
-         vertices.push(v2);
-         l = vertices.length;
-         this.faces.push(new THREE.Face3(l - 1, l - 2, firstInvoluteDeepVertex));
-         this.faces.push(new THREE.Face3(l - 2, firstInvoluteVertex, firstInvoluteDeepVertex));
-
-         var firstRightFilletVertex = vertices.length-2;
-
-         //Create fillet
-
-         for (i = 0; i < segments; i++) {
-         angle = thetaStart + step * i;
-         v = new THREE.Vector3(filletCenter.x + filletRadius * Math.cos(angle), filletCenter.y + filletRadius * Math.sin(angle));
-         v2 = v.clone();
-         v2.z = gear.width;
-         vertices.push(v);
-         vertices.push(v2);
-         l = vertices.length;
-         this.faces.push(new THREE.Face3(l - 1, l - 2, l - 3));
-         this.faces.push(new THREE.Face3(l - 2, l - 4, l - 3));
-         }
-
-         var lastRightFilletVertex = vertices.length-2;
-
-
-         //Create left undercut
-
-         //Because of Y axis symmetry
-         filletCenter.x = -filletCenter.x;
-         filletStart.x = -filletStart.x;
-         thetaStart = Math.PI - thetaStart;
-
-         v = filletStart.clone();
-         v2 = v.clone();
-         v2.z = gear.width;
-         vertices.push(v);
-         vertices.push(v2);
-         l = vertices.length;
-         this.faces.push(new THREE.Face3(l - 1, l - 2, lastInvoluteDeepVertex));
-         this.faces.push(new THREE.Face3(l - 2, lastInvoluteVertex, lastInvoluteDeepVertex));
-
-         var firstLeftFilletVertex = vertices.length-2;
-
-
-         //Create fillet
-
-         for (i = 0; i < segments; i++) {
-         angle = thetaStart - step * i;
-         v = new THREE.Vector3(filletCenter.x + filletRadius * Math.cos(angle), filletCenter.y + filletRadius * Math.sin(angle));
-         v2 = v.clone();
-         v2.z = gear.width;
-         vertices.push(v);
-         vertices.push(v2);
-         l = vertices.length;
-         this.faces.push(new THREE.Face3(l - 1, l - 2, l - 3));
-         this.faces.push(new THREE.Face3(l - 2, l - 4, l - 3));
-         }
-
-         var lastLeftFilletVertex = vertices.length-2;
-
-         //Add side undercut faces
-         for (i=0; i<lastLeftFilletVertex-firstLeftFilletVertex; i+=2) {
-         this.faces.push(new THREE.Face3(lastLeftFilletVertex-i, lastLeftFilletVertex-i-2, lastRightFilletVertex-i));
-         this.faces.push(new THREE.Face3(lastLeftFilletVertex-i-2, lastRightFilletVertex-i,lastRightFilletVertex-i-2));
-         this.faces.push(new THREE.Face3(lastLeftFilletVertex-i+1, lastLeftFilletVertex-i-2+1, lastRightFilletVertex-i+1));
-         this.faces.push(new THREE.Face3(lastLeftFilletVertex-i-2+1, lastRightFilletVertex-i+1,lastRightFilletVertex-i-2+1));
-         }
-         this.faces.push(new THREE.Face3(firstLeftFilletVertex, lastInvoluteVertex, firstRightFilletVertex));
-         this.faces.push(new THREE.Face3(lastInvoluteVertex, firstRightFilletVertex,firstInvoluteVertex));
-         this.faces.push(new THREE.Face3(firstLeftFilletVertex+1, lastInvoluteVertex+1, firstRightFilletVertex+1));
-         this.faces.push(new THREE.Face3(lastInvoluteVertex+1, firstRightFilletVertex+1,firstInvoluteVertex+1));
-         */
-
         this.mergeVertices();
         this.computeFaceNormals();
         this.computeVertexNormals();
@@ -259,9 +151,13 @@ define(['views/BasicRotatingPartMesh'], function (BasicRotatingPartMesh) {
     SpurGearGeometry.prototype.constructor = SpurGearGeometry;
 
     function SpurGearMesh(spurGear) {
+        if (!spurGear.color) {
+            spurGear.color = Math.floor((Math.random() * 0xFFFFFF) + 1);
+        }
         BasicRotatingPartMesh.call(this, new SpurGearGeometry(spurGear), new THREE.MeshBasicMaterial({
-            color: Math.floor((Math.random() * 0xFFFFFF) + 1),
-            side: THREE.DoubleSide
+            color: spurGear.color,
+            side: THREE.DoubleSide,
+            wireframe: true
         }), spurGear);
     }
 

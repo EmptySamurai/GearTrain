@@ -138,7 +138,7 @@ define(['models/Gear', 'models/Shaft', 'math/Cylinder'], function (Gear, Shaft, 
             params.clockwise = shaft.clockwise;
         } else {
             params.position = secondEnd;
-            params.axis = shaft.axis.clone.negate();
+            params.axis = shaft.axis.clone().negate();
             params.clockwise = !shaft.clockwise;
         }
         params.shaft = shaft;

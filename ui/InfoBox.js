@@ -1,11 +1,11 @@
 
 define(function() {
     function tr() {
-        return $(document.createElement("tr"));
+        return document.createElement("tr");
     }
 
     function td() {
-        return $(document.createElement("td"));
+        return document.createElement("td");
     }
 
     function InfoBox() {
@@ -20,9 +20,19 @@ define(function() {
 
     InfoBox.prototype.show = function(title, properties) {
         this.clear();
-        this.elementType.text(type);
+        this.elementType.text(title);
         for (var key in properties) {
+            var value = properties[key];
+            var row = tr();
+            this.elementProperties.append(row);
 
+            var keyColumn = td();
+            keyColumn.textContent = key;
+            row.appendChild(keyColumn);
+
+            var valueColumn = td();
+            valueColumn.textContent = value;
+            row.appendChild(valueColumn);
         }
     };
 

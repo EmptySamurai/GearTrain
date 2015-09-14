@@ -1,5 +1,4 @@
 
-
 define(['models/BaseRotatingPart', 'math/Cylinder'],
     function (BaseRotatingPart, Cylinder) {
 
