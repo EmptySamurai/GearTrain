@@ -208,7 +208,6 @@ define(function () {
         };
         var cons = [con0, con1, con2];
 
-
         var vertex11 = Vector.create([1, 1]);
 
         var con0Line = Line.create([0, 0], [1, 0]);
@@ -219,10 +218,7 @@ define(function () {
         var points = [point0, point1, point2];
 
 
-        /*var delta = 0.0001;
-         var st = Vector.create([0.35, 0.35]);*/
-
-
+        //Search on boundaries
         var iterations = 100;
         for (var i = 0; i < points.length; i++) {
             var from = points[i];
@@ -247,81 +243,6 @@ define(function () {
                 }
             }
         }
-
-
-        /*iterations = 50000;
-         for (var i = 0; i < iterations; i++) {
-         var direction = gDer(st).multiply(-1);
-         var stNew = st.add(direction.multiply(delta));
-         if (!condition(stNew)) {
-         var line = Line.create(st, direction);
-         var intersection, from, to, x,y;
-         var minX = Math.min(st.e(1), stNew.e(1)), maxX = Math.max(st.e(1), stNew.e(1));
-         var minY = Math.min(st.e(2), stNew.e(2)), maxY = Math.max(st.e(2), stNew.e(2));
-
-         if (line.intersects(con0Line)) {
-         intersection = line.intersectionWith(con0Line);
-         x = intersection.e(1);
-         y = intersection.e(2);
-         if (x >= minX && x <= maxX && y >= minY && y <= maxY) {
-         from = point0;
-         to = point1;
-         }
-         }
-
-         if (!from && line.intersects(con1Line)) {
-         intersection = line.intersectionWith(con1Line);
-         x = intersection.e(1);
-         y = intersection.e(2);
-         if (x >= minX && x <= maxX && y >= minY && y <= maxY) {
-         from = point0;
-         to = point2;
-         }
-         }
-
-         if (!from && line.intersects(con2Line)) {
-         intersection = line.intersectionWith(con2Line);
-         x = intersection.e(1);
-         y = intersection.e(2);
-         if (x >= minX && x <= maxX && y >= minY && y <= maxY) {
-         from = point1;
-         to = point2;
-         }
-         }
-
-         if (!from) {
-         console.error("No intersection!");
-         }
-
-         var dir = to.subtract(from);
-         var maxIteration = 100;
-         var rmid, rdmid;
-         for (var j = 0; j < maxIteration; j++) {
-         rmid = from.add(to).multiply(0.5);
-         if (g(rmid) <= 0) {
-         console.log("Found on boundary");
-         return true;
-         }
-         rdmid = gDer(rmid).dot(dir);
-         if (rdmid > 0) {
-         to = rmid;
-         }
-         else if (rdmid < 0) {
-         from = rmid;
-         } else {
-         break;
-         }
-         }
-         return false;
-         }
-         if (g(stNew) <= 0) {
-         console.log("At iteration: ", i);
-         return true;
-         }
-         st = stNew;
-         }
-         return false;*/
-
 
         //Check interior point method
         var hessian = gDer2; //Hessian. Since hessian for lambda_i*c_i(x) equals zero it is just hessian for g

@@ -11,8 +11,7 @@ define(['models/BaseRotatingPart', 'models/Shaft'], function (BaseRotatingPart, 
         this.shaft = shaft;
     }
 
-    Gear.prototype.__proto__ = BaseRotatingPart.prototype;
-
+    Gear.prototype = Object.create(BaseRotatingPart.prototype);
 
     Gear.prototype.iterate = function (f, initiator) {
         f(this);
@@ -58,6 +57,22 @@ define(['models/BaseRotatingPart', 'models/Shaft'], function (BaseRotatingPart, 
             this.shaft.iterate(checkIntersection);
         }
         return intersections;
+    };
+
+    /**
+     * Connects new gear too this gear in specified direction
+     * @param params params for new gear
+     * @param direction direction of connection
+     */
+    Gear.prototype.connectGear = function (params, direction) {
+        throw  new Error("Not implemented!");
+    };
+
+    /**
+     * Returns object of parameters that were used in method to create this gear. All vectors should be transformed to arrays.
+     */
+    Gear.prototype.getParamsObject = function() {
+        throw  new Error("Not implemented!");
     };
 
     return Gear;

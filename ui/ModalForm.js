@@ -47,7 +47,12 @@ define(function() {
     ModalForm.validators = {
         positiveNumber: function(n) {
             return n>0;
+        },
+        numberGreaterOrEqualTo: function(x) {
+            return function(n) {
+                return n>=x;
         }
+    }
     };
 
     ModalForm.prototype.hasCancelButton = function() {

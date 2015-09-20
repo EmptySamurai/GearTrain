@@ -12,7 +12,7 @@ define(['views/BasicRotatingPartMesh'], function (BasicRotatingPartMesh) {
 
     function ShaftMesh(shaft) {
         BasicRotatingPartMesh.call(this, new ShaftGeometry(shaft), new THREE.MeshBasicMaterial({
-            color: 0xFFFF00,
+            color: 0xC3C3C3,
             side: THREE.DoubleSide
         }), shaft);
     }

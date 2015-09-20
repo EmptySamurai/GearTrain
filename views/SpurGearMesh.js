@@ -1,7 +1,7 @@
 
 define(['views/BasicRotatingPartMesh'], function (BasicRotatingPartMesh) {
 
-    var InvoluteToothGeometry = function (spurGear) {
+    var SpurInvoluteToothGeometry = function (spurGear) {
         THREE.Geometry.call(this);
 
         var width = spurGear.width;
@@ -21,6 +21,7 @@ define(['views/BasicRotatingPartMesh'], function (BasicRotatingPartMesh) {
         var maxAngle = Math.sqrt(outsideRadius * outsideRadius - baseRadius * baseRadius) / baseRadius;
         var step = maxAngle / segments;
 
+        var zAxis = new THREE.Vector3(0, 0, 1);
 
         //Create first part of tooth profile
         var firstInvoluteVertex = 0;
@@ -34,6 +35,7 @@ define(['views/BasicRotatingPartMesh'], function (BasicRotatingPartMesh) {
             x = baseRadius * Math.cos(angle) + baseRadius * angle * Math.sin(angle);
             y = baseRadius * Math.sin(angle) - baseRadius * angle * Math.cos(angle);
             v = new THREE.Vector3(x, y, 0);
+            v.applyAxisAngle(zAxis, -halfToothAngleAtBaseCircle);
             v2 = v.clone();
             v2.z = width;
             vertices.push(v);
@@ -47,12 +49,12 @@ define(['views/BasicRotatingPartMesh'], function (BasicRotatingPartMesh) {
 
 
         //Create second part of tooth profile
-        this.applyMatrix(new THREE.Matrix4().makeRotationZ(-2 * halfToothAngleAtBaseCircle));
         for (i = segments - 1; i >= 0; i--) {
             angle = step * i;
             x = baseRadius * Math.cos(angle) + baseRadius * angle * Math.sin(angle);
             y = -(baseRadius * Math.sin(angle) - baseRadius * angle * Math.cos(angle));
             v = new THREE.Vector3(x, y, 0);
+            v.applyAxisAngle(zAxis, halfToothAngleAtBaseCircle);
             v2 = v.clone();
             v2.z = width;
             vertices.push(v);
@@ -72,8 +74,7 @@ define(['views/BasicRotatingPartMesh'], function (BasicRotatingPartMesh) {
         }
 
         //Rotate so that tooth will be centered by Y axis
-        var rotateAngle = Math.atan2(vertices[0].x, vertices[0].y);
-        this.applyMatrix(new THREE.Matrix4().makeRotationZ(rotateAngle - halfToothAngleAtBaseCircle));
+        this.applyMatrix(new THREE.Matrix4().makeRotationZ(Math.PI/2));
 
         //Create bottom
 
@@ -108,8 +109,8 @@ define(['views/BasicRotatingPartMesh'], function (BasicRotatingPartMesh) {
 
     };
 
-    InvoluteToothGeometry.prototype = new THREE.Geometry();
-    InvoluteToothGeometry.prototype.constructor = InvoluteToothGeometry;
+    SpurInvoluteToothGeometry.prototype = new THREE.Geometry();
+    SpurInvoluteToothGeometry.prototype.constructor = SpurInvoluteToothGeometry;
 
 
     var SpurGearGeometry = function (spurGear) {
@@ -135,7 +136,7 @@ define(['views/BasicRotatingPartMesh'], function (BasicRotatingPartMesh) {
 
         //create teeth
         var mRotate = new THREE.Matrix4();
-        var tooth = new InvoluteToothGeometry(spurGear);
+        var tooth = new SpurInvoluteToothGeometry(spurGear);
         for (var i = 0; i < 2 * Math.PI; i += Math.PI * 2 / spurGear.teeth) {
             mRotate.makeRotationZ(i);
             this.merge(tooth.clone(), mRotate);

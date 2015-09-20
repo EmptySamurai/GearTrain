@@ -1,15 +1,17 @@
 /*
  * Based mostly on "Elements of Metric Gear Technology"
  * http://sdp-si.com/resources/Elements_Gear_Technology.zip
+ * Also
+ * http://www.thegears.org/spur-and-helical-gears-for-parallel-shafts-design-theory/#spur-and-helical-gears
  */
 
 define(['models/Gear', 'models/Shaft', 'math/Cylinder'], function (Gear, Shaft, Cylinder) {
 
     function HelicalGear(params, shaft, parentGear) {
         Gear.call(this, params, shaft, parentGear);
-        this.type = HelicalGear.type;
-        this.normalDiametralPitch = params.normalDiametralPitch;
-        this.pressureAngle = params.pressureAngle;
+        this.type = HelicalGear.TYPE;
+        this.normalModule = params.normalModule;
+        this.normalPressureAngle = params.normalPressureAngle;
         this.helixAngle = params.helixAngle;
         this.handedness = params.handedness;
         if (this.rootRadius() <= this.innerRadius) {
@@ -28,14 +30,14 @@ define(['models/Gear', 'models/Shaft', 'math/Cylinder'], function (Gear, Shaft, 
 
     HelicalGear.prototype = Object.create(Gear.prototype);
 
-    HelicalGear.type = 'HelicalGear';
+    HelicalGear.TYPE = 'HelicalGear';
 
     HelicalGear.prototype.radialPressureAngle = function() {
-        return Math.atan(Math.tan(this.pressureAngle) / Math.cos(this.helixAngle));
+        return Math.atan(Math.tan(this.normalPressureAngle) / Math.cos(this.helixAngle));
     };
 
     HelicalGear.prototype.pitchCircleDiameter = function () {
-        return this.teeth / (this.normalDiametralPitch * Math.cos(this.helixAngle));
+        return this.teeth *this.normalModule / Math.cos(this.helixAngle);
     };
 
     HelicalGear.prototype.baseCircleRadius = function () {
@@ -43,15 +45,15 @@ define(['models/Gear', 'models/Shaft', 'math/Cylinder'], function (Gear, Shaft, 
     };
 
     HelicalGear.prototype.outsideCircleRadius = function () {
-        return (this.pitchCircleDiameter() + 2 / this.normalDiametralPitch) / 2;
+        return (this.pitchCircleDiameter() + 2 * this.normalModule) / 2;
     };
 
     HelicalGear.prototype.rootRadius = function () {
-        return (this.pitchCircleDiameter() - 2.4 / this.normalDiametralPitch) / 2;
+        return (this.pitchCircleDiameter() - 2.4 * this.normalModule) / 2;
     };
 
     HelicalGear.prototype.axialPitch = function () {
-        return this.normalDiametralPitch / Math.sin(this.helixAngle);
+        return this.normalModule / Math.sin(this.helixAngle);
     };
 
 
@@ -65,7 +67,7 @@ define(['models/Gear', 'models/Shaft', 'math/Cylinder'], function (Gear, Shaft, 
     /**
      * Connects new gear to shaft
      * @param shaft Shaft to connect
-     * @param params Gear parameters: teeth, width, diametral pitch, pressure angle
+     * @param params Gear parameters: teeth, width, normal module, pressure angle
      * @param position Position of the gear (will be projected to the axis)
      */
     HelicalGear.connectToShaft = function (shaft, params, position) {
@@ -79,13 +81,13 @@ define(['models/Gear', 'models/Shaft', 'math/Cylinder'], function (Gear, Shaft, 
         params.handedness = HelicalGear.LEFT_HANDED;
         params.helixAngle = Math.PI / 4;
         var gear = new HelicalGear(params, shaft, null);
-        shaft.gears.push(gear);
+        shaft.addGear(gear);
         return gear;
     };
 
     /**
      *
-     * @param params Object containing teeth, inner radius
+     * @param params Object containing teeth, inner radius, shaft length
      * @param direction The direction of connection
      * @return {HelicalGear} connected gear
      */
@@ -99,8 +101,8 @@ define(['models/Gear', 'models/Shaft', 'math/Cylinder'], function (Gear, Shaft, 
         params.handedness = this.handedness;
         params.up = direction.clone().normalize();
         params.width = this.width;
-        params.normalDiametralPitch = this.normalDiametralPitch;
-        params.pressureAngle = this.pressureAngle;
+        params.normalModule = this.normalModule;
+        params.normalPressureAngle = this.normalPressureAngle;
         var up = this.up;
         direction.normalize();
         up.normalize();
@@ -113,16 +115,35 @@ define(['models/Gear', 'models/Shaft', 'math/Cylinder'], function (Gear, Shaft, 
 
         params.angle = Math.PI +(this.angle - jointAngle) * ratio;
 
-        var distance = ((this.teeth / Math.cos(this.helixAngle) + params.teeth / Math.cos(params.helixAngle)) / this.normalDiametralPitch) / 2;
+        var distance = ((this.teeth / Math.cos(this.helixAngle) + params.teeth / Math.cos(params.helixAngle)) * this.normalModule) / 2;
         params.position = this.position.clone().add(direction.clone().multiplyScalar(distance));
         params.axis = new THREE.Vector3().crossVectors(this.axis, direction).normalize().negate();
         params.radius = params.innerRadius;
-        params.length = this.width * 3;
         var shaft = new Shaft(params, this);
         var gear = new HelicalGear(params, shaft, this);
-        shaft.gears.push(gear);
+        shaft.addGear(gear);
         this.gears.push(gear);
         return gear;
+    };
+
+    HelicalGear.prototype.getParamsObject = function() {
+        if (this.parentGear) {
+            return {
+                teeth: this.teeth,
+                innerRadius: this.innerRadius,
+                length: this.shaft.length,
+                direction: this.up.clone().toArray()
+            }
+        } else {
+            return {
+                teeth: this.teeth,
+                width: this.width,
+                normalModule: this.normalModule,
+                normalPressureAngle : this.normalPressureAngle,
+                type: this.type,
+                position : this.position.toArray()
+            }
+        }
     };
 
     return HelicalGear;

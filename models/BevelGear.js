@@ -7,8 +7,8 @@ define(['models/Gear', 'models/Shaft', 'math/Cylinder'], function (Gear, Shaft, 
 
     function BevelGear(params, shaft, parent) {
         Gear.call(this, params, shaft, parent);
-        this.type = BevelGear.type;
-        this.diametralPitch = params.diametralPitch;
+        this.type = BevelGear.TYPE;
+        this.module = params.module;
         this.pressureAngle = params.pressureAngle;
         this.childTeeth = params.childTeeth;
 
@@ -17,7 +17,7 @@ define(['models/Gear', 'models/Shaft', 'math/Cylinder'], function (Gear, Shaft, 
         }
 
         var faceWidth = this.faceWidth();
-        if (faceWidth > this.coneDistance() / 3 || faceWidth > 10 / this.diametralPitch) {
+        if (faceWidth > this.coneDistance() / 3 || faceWidth > 10 * this.module) {
             throw new Error("Face width is too large");
         }
 
@@ -28,7 +28,7 @@ define(['models/Gear', 'models/Shaft', 'math/Cylinder'], function (Gear, Shaft, 
 
     BevelGear.prototype = Object.create(Gear.prototype);
 
-    BevelGear.type = 'BevelGear';
+    BevelGear.TYPE = 'BevelGear';
 
     BevelGear.shaftAngle = Math.PI / 2;
 
@@ -40,15 +40,15 @@ define(['models/Gear', 'models/Shaft', 'math/Cylinder'], function (Gear, Shaft, 
 
 
     BevelGear.prototype.pitchCircleDiameter = function () {
-        return this.teeth / this.diametralPitch;
+        return this.teeth * this.module;
     };
 
     BevelGear.prototype.addendum = function () {
-        return 1 / this.diametralPitch;
+        return 1 * this.module;
     };
 
     BevelGear.prototype.dedendum = function () {
-        return 1.25 / this.diametralPitch;
+        return 1.25 * this.module;
     };
 
 
@@ -125,7 +125,7 @@ define(['models/Gear', 'models/Shaft', 'math/Cylinder'], function (Gear, Shaft, 
     /**
      * Connects new bevel gear to shaft
      * @param shaft shaft to connect
-     * @param params Parameters for the gear: diametralPitch, pressureAngle, number of teeth, child's number of teeth
+     * @param params Parameters for the gear: module, pressureAngle, number of teeth, child's number of teeth
      * @param position position of gear center
      */
     BevelGear.connectToShaft = function (shaft, params, position) {
@@ -147,14 +147,14 @@ define(['models/Gear', 'models/Shaft', 'math/Cylinder'], function (Gear, Shaft, 
         params.innerRadius = shaft.radius;
 
         var gear = new BevelGear(params, shaft, null);
-        shaft.gears.push(gear);
+        shaft.addGear(gear);
         return gear;
 
     };
 
     /**
      *
-     * @param params Object containing inner radius
+     * @param params Object containing inner radius, shaft length
      * @param direction The direction of connection
      * @return {BevelGear} connected gear
      */
@@ -177,7 +177,7 @@ define(['models/Gear', 'models/Shaft', 'math/Cylinder'], function (Gear, Shaft, 
         }
         jointAngle = this.clockwise ? jointAngle : -jointAngle;
         params.angle = Math.PI + 2 * Math.PI / params.teeth / 2 + (this.angle - jointAngle) * ratio;
-        params.diametralPitch = this.diametralPitch;
+        params.module = this.module;
         params.pressureAngle = this.pressureAngle;
         //dirty hack to calculate top radius and root cone angle easily for new gear from params
         params.__proto__ = BevelGear.prototype;
@@ -185,15 +185,34 @@ define(['models/Gear', 'models/Shaft', 'math/Cylinder'], function (Gear, Shaft, 
         var xOffset = params.topRadius() / Math.tan(params.rootConeAngle()) + params.width / 2;
         params.axis = direction.clone().negate();
         var gearPosition = this.position.clone().add(this.axis.clone().setLength(yOffset)).add(params.axis.clone().negate().setLength(xOffset));
-        params.length = this.width * 3;
         var shaftPosition = gearPosition.clone().add(params.axis.clone().negate().setLength(params.length / 2 - params.width / 2));
         params.position = shaftPosition;
         var shaft = new Shaft(params, this);
         params.position = gearPosition;
         var gear = new BevelGear(params, shaft, this);
-        shaft.gears.push(gear);
+        shaft.addGear(gear);
         this.gears.push(gear);
         return gear;
+    };
+
+    BevelGear.prototype.getParamsObject = function () {
+        if (this.parentGear) {
+            return {
+                innerRadius: this.innerRadius,
+                length: this.shaft.length,
+                direction: this.axis.clone().negate().toArray()
+            }
+        } else {
+            return {
+                teeth: this.teeth,
+                width: this.width,
+                module: this.module,
+                pressureAngle: this.pressureAngle,
+                childTeeth: this.childTeeth,
+                type: this.type,
+                position: this.position.toArray()
+            }
+        }
     };
 
     return BevelGear;

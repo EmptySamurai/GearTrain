@@ -8,14 +8,14 @@ define(function() {
         this.axis = params.axis.clone().normalize();
         if (!params.up) {
             var randomVector = this.axis.clone();
-            randomVector.x += 10;
+            randomVector.x += 10; //adding random non-zero value
             this.up = new THREE.Vector3().crossVectors(this.axis, randomVector).normalize();
         } else {
             this.up = params.up.clone().normalize();
         }
     }
 
-    BaseRotatingPart.prototype.__proto__ = EventEmitter.prototype;
+    BaseRotatingPart.prototype = Object.create(EventEmitter.prototype);
 
     BaseRotatingPart.prototype.rotate = function (speed, ms) {
         var radSpeed = (2 * Math.PI) / 60 * speed * this.totalRatio; //speed in radians

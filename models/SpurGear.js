@@ -7,8 +7,8 @@ define(['models/Gear', 'models/Shaft', 'math/Cylinder'], function (Gear, Shaft, 
 
     function SpurGear(params, shaft, parentGear) {
         Gear.call(this, params, shaft, parentGear);
-        this.type = SpurGear.type;
-        this.diametralPitch = params.diametralPitch;
+        this.type = SpurGear.TYPE;
+        this.module = params.module;
         this.pressureAngle = params.pressureAngle;
         if (this.rootRadius() <= this.innerRadius) {
             throw new Error("Inner radius larger than root radius");
@@ -21,10 +21,10 @@ define(['models/Gear', 'models/Shaft', 'math/Cylinder'], function (Gear, Shaft, 
 
     SpurGear.prototype = Object.create(Gear.prototype);
 
-    SpurGear.type = 'SpurGear';
+    SpurGear.TYPE = 'SpurGear';
 
     SpurGear.prototype.pitchCircleDiameter = function () {
-        return this.teeth / this.diametralPitch;
+        return this.teeth * this.module;
     };
 
     SpurGear.prototype.baseCircleRadius = function () {
@@ -32,11 +32,11 @@ define(['models/Gear', 'models/Shaft', 'math/Cylinder'], function (Gear, Shaft, 
     };
 
     SpurGear.prototype.outsideCircleRadius = function () {
-        return (this.teeth + 2) / this.diametralPitch / 2;
+        return (this.teeth + 2) * this.module / 2;
     };
 
     SpurGear.prototype.rootRadius = function () {
-        return (this.teeth - 2) / this.diametralPitch / 2;
+        return (this.teeth - 2) * this.module / 2;
     };
 
     SpurGear.prototype.toCylinder = function () {
@@ -47,7 +47,7 @@ define(['models/Gear', 'models/Shaft', 'math/Cylinder'], function (Gear, Shaft, 
     /**
      * Connects new gear to shaft
      * @param shaft Shaft to connect
-     * @param params Gear parameters: teeth, width, diametral pitch, pressure angle
+     * @param params Gear parameters: teeth, width, module, pressure angle
      * @param position Position of the gear (will be projected to the axis)
      */
     SpurGear.connectToShaft = function (shaft, params, position) {
@@ -59,14 +59,14 @@ define(['models/Gear', 'models/Shaft', 'math/Cylinder'], function (Gear, Shaft, 
         params.angle = 0;
         params.innerRadius = shaft.radius;
         var gear = new SpurGear(params, shaft, null);
-        shaft.gears.push(gear);
+        shaft.addGear(gear);
         return gear;
     };
 
     /**
      *
-     * @param params Object containing teeth, inner radius
-     * @param direction The direction of connection *
+     * @param params Object containing teeth, inner radius, shaft length
+     * @param direction The direction of connection
      * @return {SpurGear} connected gear
      */
     SpurGear.prototype.connectGear = function (params, direction) {
@@ -95,19 +95,38 @@ define(['models/Gear', 'models/Shaft', 'math/Cylinder'], function (Gear, Shaft, 
          So we have to 'rotate' driver gear by -joint angle
          */
         params.angle = Math.PI + 2 * Math.PI / params.teeth / 2 + (this.angle - jointAngle) * ratio;
-        params.diametralPitch = this.diametralPitch;
+        params.module = this.module;
         params.pressureAngle = this.pressureAngle;
-        var distance = ((this.teeth + params.teeth) / this.diametralPitch) / 2;
+        var distance = ((this.teeth + params.teeth) * this.module) / 2;
         params.position = this.position.clone().add(direction.multiplyScalar(distance));
         params.axis = this.axis.clone();
         params.width = this.width;
         params.radius = params.innerRadius;
-        params.length = this.width * 3;
         var shaft = new Shaft(params, this);
         var gear = new SpurGear(params, shaft, this);
-        shaft.gears.push(gear);
+        shaft.addGear(gear);
         this.gears.push(gear);
         return gear;
+    };
+
+    SpurGear.prototype.getParamsObject = function() {
+        if (this.parentGear) {
+            return {
+                teeth: this.teeth,
+                innerRadius: this.innerRadius,
+                length: this.shaft.length,
+                direction: this.position.clone().sub(this.parentGear.position).toArray()
+            }
+        } else {
+            return {
+                teeth: this.teeth,
+                width: this.width,
+                module: this.module,
+                pressureAngle : this.pressureAngle,
+                type: this.type,
+                position : this.position.toArray()
+            }
+        }
     };
 
     return SpurGear;

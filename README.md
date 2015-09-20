@@ -6,8 +6,8 @@ To move camera use mouse and mouse wheel.
 
 There are two modes to work with simulation:
   1. Add/remove mode. In this mode you can 
-     * Add selected gear to shaft by double clicking on shaft. 
-     * Add gear to another gear by by double clicking on gear.
+     * Add selected gear to shaft by double clicking on the shaft. 
+     * Add gear to another gear by by double clicking on the gear.
      * Remove gear or shaft by right clicking on it. The driver (initially created) shaft cannot be removed.
   2. Info mode. In this mode you can double click on shaft or gear to get info about it.
       
@@ -25,3 +25,6 @@ There are also some shortcuts for controls:
 
 ## Settings
 All controls' states are saved into cookies and have session lifetime.
+
+## Saving and loading
+By clicking on "Save" button you will save current gear train into JSON file. You can load it by clicking on 'Load' button.

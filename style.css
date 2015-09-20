@@ -15,23 +15,24 @@ canvas {
     position: absolute;
 }
 
-.control {
+#controls {
+    top: 20px;
     width: 120px;
     left: 20px;
-    background: #F5F5F5;
     position: absolute;
 }
 
-#mouse_action {
-    top: 20px;
+#save_load_controls {
+    margin-bottom: 10px;
 }
 
-#gear_type {
-    top:100px;
+#load_input {
+    display: none;
 }
 
-#speed {
-    top: 200px;
+.control {
+    margin-bottom: 20px;
+    background: #F5F5F5;
 }
 
 #speed_input {
@@ -53,7 +54,7 @@ canvas {
 }
 
 #element_type {
-    font-weight: bold;
+    font-style: italic;
 }
 
 #element_properties {
@@ -98,7 +99,7 @@ canvas {
 }
 
 .modal_form h3 {
-    margin: 5px 0 15px 0;
+    margin: 5px 0 10px 0;
 }
 
 #message_box {

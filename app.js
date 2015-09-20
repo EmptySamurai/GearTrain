@@ -44,9 +44,6 @@ define(function () {
             var mouseAction = getStringCookieOrDefault('mouseaction', 'add_remove');
             $('input[name="mouseaction"][value="'+mouseAction+'"]').prop('checked', true);
 
-            var speed = getNumberCookieOrDefault('speed', GearTrainController.DEFAULT_SPEED);
-            $('#speed_input').val(speed);
-
             var showLogs = getBooleanCookieOrDefault('showlogs', true);
             $('#show_logs').prop('checked', showLogs);
 
@@ -61,12 +58,6 @@ define(function () {
             });
             $('input[name="mouseaction"]:radio').change(function() {
                 Cookies.set('mouseaction', $(this).val(), {path: ''});
-            });
-            $('#speed_input').change(function() {
-                var speed = $(this).val();
-                if ($.isNumeric(speed)) {
-                    Cookies.set('speed', speed, {path: ''});
-                }
             });
             $('#show_logs').change(function() {
                 Cookies.set('showlogs', this.checked,  {path: ''});
@@ -134,9 +125,8 @@ define(function () {
             var scene = new THREE.Scene();
             var camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
 
-            var renderer = new THREE.WebGLRenderer({
-                alpha: true
-            });
+            var renderer = new THREE.WebGLRenderer();
+            renderer.setClearColor(0xFFFFFF);
             renderer.setSize(window.innerWidth, window.innerHeight);
             document.body.appendChild(renderer.domElement);
 
